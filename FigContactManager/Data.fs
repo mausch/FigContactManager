@@ -24,13 +24,13 @@ module Data =
         Contact: int64
     }
 
-    let internal strEq (a: string) (b: string) = 
+    let private strEq (a: string) (b: string) = 
         StringComparer.InvariantCultureIgnoreCase.Equals(a, b)
 
-    let internal keywords = 
+    let private keywords = 
         let k = ["order"; "group"]
         HashSet<_>(k, StringComparer.InvariantCultureIgnoreCase)
-    let internal escape s =
+    let private escape s =
         if keywords.Contains s
             then sprintf "\"%s\"" s // sqlite-specific quote
             else s
@@ -73,12 +73,12 @@ module Data =
         types |> Seq.iter (createTable escape sqlType)
 
 
-    let internal P = Sql.Parameter.make
+    let private P = Sql.Parameter.make
 
-    let inline internal (>>=) f x = Tx.bind x f
-    let inline internal (>>.) x f = Tx.bind (fun _ -> x) f
+    let inline private (>>=) f x = Tx.bind x f
+    let inline private (>>.) x f = Tx.bind (fun _ -> x) f
 
-    let internal selectLastId = "select last_insert_rowid();"
+    let private selectLastId = "select last_insert_rowid();"
 
     let generateInsert a =
         let allfields = a.GetType() |> Sql.recordFields
