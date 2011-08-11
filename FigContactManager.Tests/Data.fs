@@ -49,9 +49,10 @@ let ``generate update`` () =
     Assert.AreEqual("ee", unbox p.["@Email"])
     
 
+let tx = Tx.TransactionBuilder()
+
 [<Test>]
 let ``create contact``() =
-    let tx = Tx.TransactionBuilder()
     use conn = createConnection()
     let mgr = Sql.withConnection conn
     createSchema conn [typeof<Contact>]
@@ -72,7 +73,6 @@ let ``create contact``() =
 
 [<Test>]
 let ``create group`` () =
-    let tx = Tx.TransactionBuilder()
     use conn = createConnection()
     let mgr = Sql.withConnection conn
     createSchema conn [typeof<Group>]
@@ -84,7 +84,6 @@ let ``create group`` () =
 
 [<Test>]
 let ``delete group cascade`` () =
-    let tx = Tx.TransactionBuilder()
     use conn = createConnection()
     let mgr = Sql.withConnection conn
     createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
