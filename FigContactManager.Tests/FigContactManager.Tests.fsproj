@@ -36,6 +36,7 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <Compile Include="Assembly.fs" />
     <Compile Include="Data.fs" />
   </ItemGroup>
   <ItemGroup>
