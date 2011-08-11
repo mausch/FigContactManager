@@ -13,6 +13,24 @@ let createConnection() =
     conn :> IDbConnection
 
 [<Test>]
+let ``generate insert`` () =
+    let sql,p = 
+        generateInsert { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
+        |> (fun (a,b) -> (a,Seq.toList b))
+    printfn "%s" sql
+    Assert.AreEqual("insert into Contact values (null, @Name,@Phone,@Email)", sql)
+    Assert.AreEqual(3, p.Length)
+    Assert.AreEqual("@Name", p.[0].ParameterName)
+    Assert.AreEqual("@Phone", p.[1].ParameterName)
+    Assert.AreEqual("@Email", p.[2].ParameterName)
+    Assert.AreEqual("John", string p.[0].Value)
+    Assert.AreEqual("555-1234", string p.[1].Value)
+    Assert.AreEqual("john@example.com", string p.[2].Value)
+
+    ()
+
+
+[<Test>]
 let ``create contact``() =
     let tx = Tx.TransactionBuilder()
     use conn = createConnection()

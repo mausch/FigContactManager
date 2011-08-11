@@ -71,9 +71,16 @@ module Data =
 
     let internal selectLastId = "select last_insert_rowid();"
 
+    let generateInsert a =
+        let fields = a.GetType() |> Sql.recordFields |> Seq.skip 1 |> Seq.map (fun f -> "@" + f) |> Seq.toList
+        let sql = sprintf "insert into %s values (null, %s); %s" (a.GetType().Name) (String.concat "," fields) selectLastId
+        let values = Sql.recordValues a |> Seq.skip 1
+        let parameters = Seq.zip fields values |> Sql.parameters
+        sql,parameters
+
     let insertContact (c: Contact) =
-        let sql = "insert into contact values (null, @n, @p, @e);" + selectLastId
-        Tx.execScalar sql
-            [P("@n", c.Name); P("@p", c.Phone); P("@e", c.Email)] 
+        generateInsert c 
+        ||> Tx.execScalar
         |> Tx.map Option.get
         |> Tx.map (fun newId -> { c with Id = newId })
+
