@@ -18,7 +18,7 @@ let ``generate insert`` () =
         generateInsert { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
         |> (fun (a,b) -> (a,Seq.toList b))
     printfn "%s" sql
-    Assert.AreEqual("insert into Contact values (null, @Name,@Phone,@Email)", sql)
+    Assert.AreEqual("insert into Contact (Id,Name,Phone,Email) values (null, @Name,@Phone,@Email); select last_insert_rowid();", sql)
     Assert.AreEqual(3, p.Length)
     Assert.AreEqual("@Name", p.[0].ParameterName)
     Assert.AreEqual("@Phone", p.[1].ParameterName)
