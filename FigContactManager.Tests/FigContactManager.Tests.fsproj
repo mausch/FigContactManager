@@ -2,19 +2,17 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{a7ca8c9b-bab4-4647-9eb9-33c367e4620e}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>FigContactManager</RootNamespace>
-    <AssemblyName>FigContactManager</AssemblyName>
+    <ProjectGuid>{717a5346-84ef-4a8a-bc70-c3011f9458a1}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>FigContactManager.Tests</RootNamespace>
+    <AssemblyName>FigContactManager.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
-    <Name>FigContactManager</Name>
+    <Name>FigContactManager.Tests</Name>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,35 +20,47 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Debug\FigContactManager.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\FigContactManager.Tests.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Release\FigContactManager.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\FigContactManager.Tests.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="Data.fs" />
-    <Compile Include="Global.asax.fs" />
-    <Compile Include="Program.fs" />
-    <None Include="App.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="app.config" />
     <None Include="packages.config" />
+    <Compile Include="Data.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FsSql\FsSql\FsSql.fsproj">
+      <Name>FsSql</Name>
+      <Project>{f2570da4-5df1-4d5e-9534-b3f55606b3b5}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <Reference Include="Gallio">
+      <HintPath>C:\prg\FigContactManager\packages\Gallio.3.2.601\lib\Gallio.dll</HintPath>
+    </Reference>
+    <Reference Include="Gallio40">
+      <HintPath>..\packages\Gallio.3.2.601\lib\NET40\Gallio40.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="MbUnit">
+      <HintPath>C:\prg\FigContactManager\packages\Gallio.3.2.601\lib\MbUnit.dll</HintPath>
+    </Reference>
+    <Reference Include="MbUnit40">
+      <HintPath>..\packages\Gallio.3.2.601\lib\NET40\MbUnit40.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite">
@@ -58,29 +68,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Numerics" />
-    <ProjectReference Include="..\Figment\Figment\Figment.fsproj">
-      <Name>Figment</Name>
-      <Project>{a080b979-6e39-44c4-ac1a-4850e32c355a}</Project>
+    <ProjectReference Include="..\FigContactManager\FigContactManager.fsproj">
+      <Name>FigContactManager</Name>
+      <Project>{a7ca8c9b-bab4-4647-9eb9-33c367e4620e}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\FsFormlets\Formlets\Formlets.fsproj">
-      <Name>Formlets</Name>
-      <Project>{d628a18c-7c64-48cd-bc52-add7a88a8770}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\FsFormlets\WingBeats.Formlets\WingBeats.Formlets.fsproj">
-      <Name>WingBeats.Formlets</Name>
-      <Project>{c920fcb6-bf44-4884-a744-1409ac0a21c4}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\FsSql\FsSql\FsSql.fsproj">
-      <Name>FsSql</Name>
-      <Project>{f2570da4-5df1-4d5e-9534-b3f55606b3b5}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <Reference Include="System.Web" />
-    <Reference Include="System.Web.Mvc, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" />
-    <Reference Include="System.Web.Routing" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

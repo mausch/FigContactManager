@@ -11,6 +11,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "WingBeats.Formlets", "FsFor
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsSql", "FsSql\FsSql\FsSql.fsproj", "{F2570DA4-5DF1-4D5E-9534-B3F55606B3B5}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FigContactManager.Tests", "FigContactManager.Tests\FigContactManager.Tests.fsproj", "{717A5346-84EF-4A8A-BC70-C3011F9458A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,16 @@ Global
 		{F2570DA4-5DF1-4D5E-9534-B3F55606B3B5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{F2570DA4-5DF1-4D5E-9534-B3F55606B3B5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{F2570DA4-5DF1-4D5E-9534-B3F55606B3B5}.Release|x86.ActiveCfg = Release|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{717A5346-84EF-4A8A-BC70-C3011F9458A1}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
