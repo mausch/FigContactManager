@@ -19,6 +19,7 @@ module Data =
     }
 
     type ContactGroup = {
+        Id: int64
         Group: int64
         Contact: int64
     }
@@ -83,9 +84,19 @@ module Data =
         let parameters = Seq.zip names values |> Sql.parameters
         sql,parameters
 
-    let insertContact (c: Contact) =
+    let genericInsert c =
         generateInsert c 
         ||> Tx.execScalar
         |> Tx.map Option.get
+
+    let insertContact (c: Contact) =
+        genericInsert c
         |> Tx.map (fun newId -> { c with Id = newId })
 
+    let insertGroup (c: Group) =
+        genericInsert c
+        |> Tx.map (fun newId -> { c with Id = newId })
+
+    let insertContactGroup (c: ContactGroup) =
+        genericInsert c
+        |> Tx.map (fun newId -> { c with Id = newId })
