@@ -42,8 +42,10 @@ module Data =
                 then sprintf "\"%s\"" s // sqlite-specific quote
                 else s
         let createTable (escape: string -> string) (sqlType: Type -> string) (t: Type) =
-            let fields = FSharpType.GetRecordFields t |> Seq.filter (fun p -> strEq p.Name "id" |> not)
-            let table = escape t.Name
+            let fields = 
+                FSharpType.GetRecordFields t 
+                |> Seq.filter (fun p -> strEq p.Name "id" |> not) // convention: id field is named "id"
+            let table = escape t.Name // convention: type name = table name
             let drop = sprintf "drop table if exists %s" table
             let fields = 
                 let fieldType (t: Type) =
@@ -57,6 +59,7 @@ module Data =
                     let nullable = if nullable then "" else "not"
                     sprintf "%s %s null" sqlType nullable
                 fields |> Seq.map (fun f -> sprintf "%s %s" (escape f.Name) (fieldType f.PropertyType))
+                // convention: record field name = table column name
             let fields = String.Join(",", Seq.toArray fields)
             let create = sprintf "create table %s (id integer primary key autoincrement, %s)" table fields
             //printfn "%s" create
@@ -74,15 +77,23 @@ module Data =
 
     let generateInsert a =
         let allfields = a.GetType() |> Sql.recordFields
+        // convention: first field is ID
         let names = allfields |> Seq.skip 1 |> Seq.map (fun f -> "@" + f) |> Seq.toList
         let sql = sprintf "insert into %s (%s) values (null, %s); %s" 
-                    (a.GetType().Name)
+                    (a.GetType().Name) // convention: type name = table name
                     (String.concat "," allfields)
                     (String.concat "," names) 
                     selectLastId
         let values = Sql.recordValues a |> Seq.skip 1
         let parameters = Seq.zip names values |> Sql.parameters
         sql,parameters
+
+    let generateDelete a =
+        // convention: first field is ID
+        let value = a |> Sql.recordValues |> Seq.head
+        let name = "@i"
+        let sql = sprintf "delete from %s where id = %s" (a.GetType().Name) name
+        sql,[P(name,value)]
 
     let genericInsert c =
         generateInsert c 
@@ -93,10 +104,22 @@ module Data =
         genericInsert c
         |> Tx.map (fun newId -> { c with Id = newId })
 
+    let deleteContact (c: Contact) =
+        generateDelete c
+        ||> Tx.execNonQueryi
+
     let insertGroup (c: Group) =
         genericInsert c
         |> Tx.map (fun newId -> { c with Id = newId })
 
+    let deleteGroup (c: Group) =
+        generateDelete c
+        ||> Tx.execNonQueryi
+
     let insertContactGroup (c: ContactGroup) =
         genericInsert c
         |> Tx.map (fun newId -> { c with Id = newId })
+
+    let deleteContactGroup (c: ContactGroup) =
+        generateDelete c
+        ||> Tx.execNonQueryi
