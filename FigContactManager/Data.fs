@@ -78,7 +78,7 @@ module Data =
     let generateInsert a =
         let allfields = a.GetType() |> Sql.recordFields
         // convention: first field is ID
-        let names = allfields |> Seq.skip 1 |> Seq.map (fun f -> "@" + f) |> Seq.toList
+        let names = allfields |> Seq.skip 1 |> Seq.map (sprintf "@%s") |> Seq.toList
         let sql = sprintf "insert into %s (%s) values (null, %s); %s" 
                     (a.GetType().Name) // convention: type name = table name
                     (String.concat "," allfields)
@@ -94,6 +94,23 @@ module Data =
         let name = "@i"
         let sql = sprintf "delete from %s where id = %s" (a.GetType().Name) name
         sql,[P(name,value)]
+
+    let generateUpdate a =
+        // convention: first field is ID
+        let idValue = a |> Sql.recordValues |> Seq.head
+        let idField = "@id"
+        let allFieldsButId = a.GetType() |> Sql.recordFields |> Seq.skip 1 
+        let fieldsAndParams = 
+            allFieldsButId
+            |> Seq.map (fun f -> sprintf "%s=@%s" f f)
+            |> Seq.toList
+            |> String.concat ","
+        let sql = sprintf "update %s set %s where id = %s" (a.GetType().Name) fieldsAndParams idField
+        let values = a |> Sql.recordValues |> Seq.skip 1
+        let names = allFieldsButId |> Seq.map (sprintf "@%s")
+        let parameters = Seq.zip names values |> Sql.parameters |> Seq.toList
+        let parameters = P(idField, idValue)::parameters
+        sql,parameters
 
     let genericInsert c =
         generateInsert c 

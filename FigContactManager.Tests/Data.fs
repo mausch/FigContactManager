@@ -26,8 +26,28 @@ let ``generate insert`` () =
     Assert.AreEqual("555-1234", string p.[1].Value)
     Assert.AreEqual("john@example.com", string p.[2].Value)
 
-    ()
+[<Test>]
+let ``generate delete`` () =
+    let sql,p = generateDelete { Name = ""; Id = 2L; Phone = ""; Email = "" }
+    let p = Seq.toList p
+    printfn "%s" sql
+    Assert.AreEqual("delete from Contact where id = @i", sql)
+    Assert.AreEqual(1, p.Length)
+    Assert.AreEqual("@i", p.[0].ParameterName)
+    Assert.AreEqual(2L, unbox p.[0].Value)
 
+[<Test>]
+let ``generate update`` () =
+    let sql,p = generateUpdate { Name = "nn"; Id = 2L; Phone = "pp"; Email = "ee" }
+    let p = p |> Seq.map (fun p -> p.ParameterName, p.Value) |> dict
+    printfn "%s" sql
+    Assert.AreEqual("update Contact set Name=@Name,Phone=@Phone,Email=@Email where id = @id", sql)
+    Assert.AreEqual(4, p.Count)
+    Assert.AreEqual(2L, unbox p.["@id"])
+    Assert.AreEqual("nn", unbox p.["@Name"])
+    Assert.AreEqual("pp", unbox p.["@Phone"])
+    Assert.AreEqual("ee", unbox p.["@Email"])
+    
 
 [<Test>]
 let ``create contact``() =
@@ -49,4 +69,3 @@ let ``create contact``() =
         Assert.AreEqual(2L, c2.Id)
     | Tx.Failed e -> raise e
     | Tx.Rollback _ -> failwith "rollback"
-    ()
