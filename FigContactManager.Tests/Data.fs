@@ -67,7 +67,19 @@ let ``create contact``() =
     | Tx.Commit (c1,c2) ->
         Assert.AreEqual(1L, c1.Id)
         Assert.AreEqual(2L, c2.Id)
-    | Tx.Failed e -> raise e
+    | Tx.Failed e -> raise (Exception("", e))
+    | Tx.Rollback _ -> failwith "rollback"
+
+[<Test>]
+let ``create group`` () =
+    let tx = Tx.TransactionBuilder()
+    use conn = createConnection()
+    let mgr = Sql.withConnection conn
+    createSchema conn [typeof<Group>]
+    let newGroup = insertGroup { Id = 0L; Name = "Business" } |> Tx.map ignore
+    match newGroup mgr with
+    | Tx.Commit _ -> ()
+    | Tx.Failed e -> raise (Exception("", e))
     | Tx.Rollback _ -> failwith "rollback"
 
 [<Test>]
@@ -76,3 +88,18 @@ let ``delete group cascade`` () =
     use conn = createConnection()
     let mgr = Sql.withConnection conn
     createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
+    let transaction = 
+        tx {
+            let! john = insertContact { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
+            let! business = insertGroup { Id = 0L; Name = "Business" }
+            let! john_business = insertContactGroup { Id = 0L; Group = business.Id; Contact = john.Id }
+            do! deleteGroupCascade business
+            let! count = Tx.execScalar "select count(*) from ContactGroup" []
+            let count = Option.get count
+            Assert.AreEqual(0L, count)
+        }
+    match transaction mgr with
+    | Tx.Commit _ -> ()
+    | Tx.Failed e -> raise (Exception("", e))
+    | Tx.Rollback _ -> failwith "rollback"
+
