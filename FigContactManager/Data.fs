@@ -32,11 +32,12 @@ module Data =
         let sqlType t =
             match t with
             | x when x = typeof<int> -> "int"
-            | x when x = typeof<string> -> "varchar"
+            | x when x = typeof<int64> -> "int"
             | x when x = typeof<bool> -> "int"
+            | x when x = typeof<string> -> "varchar"
             | x when x = typeof<DateTime> -> "datetime"
             | x -> failwithf "Don't know how to express type %A in database" x
-        let keywords = HashSet<_>(["order"], StringComparer.InvariantCultureIgnoreCase)
+        let keywords = HashSet<_>(["order"; "group"], StringComparer.InvariantCultureIgnoreCase)
         let escape s =
             if keywords.Contains s
                 then sprintf "\"%s\"" s // sqlite-specific quote
