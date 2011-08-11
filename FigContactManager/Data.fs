@@ -27,6 +27,14 @@ module Data =
     let internal strEq (a: string) (b: string) = 
         StringComparer.InvariantCultureIgnoreCase.Equals(a, b)
 
+    let internal keywords = 
+        let k = ["order"; "group"]
+        HashSet<_>(k, StringComparer.InvariantCultureIgnoreCase)
+    let internal escape s =
+        if keywords.Contains s
+            then sprintf "\"%s\"" s // sqlite-specific quote
+            else s
+
     let createSchema conn types =
         let exec a = Sql.execNonQuery (Sql.withConnection conn) a [] |> ignore
         let sqlType t =
@@ -37,11 +45,6 @@ module Data =
             | x when x = typeof<string> -> "varchar"
             | x when x = typeof<DateTime> -> "datetime"
             | x -> failwithf "Don't know how to express type %A in database" x
-        let keywords = HashSet<_>(["order"; "group"], StringComparer.InvariantCultureIgnoreCase)
-        let escape s =
-            if keywords.Contains s
-                then sprintf "\"%s\"" s // sqlite-specific quote
-                else s
         let createTable (escape: string -> string) (sqlType: Type -> string) (t: Type) =
             let fields = 
                 FSharpType.GetRecordFields t 
@@ -82,8 +85,8 @@ module Data =
         // convention: first field is ID
         let names = allfields |> Seq.skip 1 |> Seq.map (sprintf "@%s") |> Seq.toList
         let sql = sprintf "insert into %s (%s) values (null, %s); %s" 
-                    (a.GetType().Name) // convention: type name = table name
-                    (String.concat "," allfields)
+                    (escape <| a.GetType().Name) // convention: type name = table name
+                    (allfields |> Seq.map escape |> String.concat ",")
                     (String.concat "," names) 
                     selectLastId
         let values = Sql.recordValues a |> Seq.skip 1
@@ -94,7 +97,7 @@ module Data =
         // convention: first field is ID
         let value = a |> Sql.recordValues |> Seq.head
         let name = "@i"
-        let sql = sprintf "delete from %s where id = %s" (a.GetType().Name) name
+        let sql = sprintf "delete from %s where id = %s" (escape <| a.GetType().Name) name
         sql,[P(name,value)]
 
     let generateUpdate a =
@@ -104,10 +107,13 @@ module Data =
         let allFieldsButId = a.GetType() |> Sql.recordFields |> Seq.skip 1 
         let fieldsAndParams = 
             allFieldsButId
-            |> Seq.map (fun f -> sprintf "%s=@%s" f f)
+            |> Seq.map (fun f -> sprintf "%s=@%s" (escape f) f)
             |> Seq.toList
             |> String.concat ","
-        let sql = sprintf "update %s set %s where id = %s" (a.GetType().Name) fieldsAndParams idField
+        let sql = sprintf "update %s set %s where id = %s" 
+                    (escape <| a.GetType().Name) 
+                    fieldsAndParams 
+                    idField
         let values = a |> Sql.recordValues |> Seq.skip 1
         let names = allFieldsButId |> Seq.map (sprintf "@%s")
         let parameters = Seq.zip names values |> Sql.parameters |> Seq.toList
@@ -144,7 +150,7 @@ module Data =
         ||> Tx.execNonQueryi
 
     let deleteContactGroupByGroup (c: Group) =
-        Tx.execNonQueryi "delete from ContactGroup where group = @g" [P("@g",c.Id)]
+        Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c.Id)]
 
     let deleteGroupCascade (c: Group) =
         deleteContactGroupByGroup c >>. deleteGroup c
