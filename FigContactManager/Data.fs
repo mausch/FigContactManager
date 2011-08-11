@@ -48,7 +48,7 @@ module Data =
         let createTable (escape: string -> string) (sqlType: Type -> string) (t: Type) =
             let fields = 
                 FSharpType.GetRecordFields t 
-                |> Seq.filter (fun p -> strEq p.Name "id" |> not) // convention: id field is named "id"
+                |> Seq.filter (fun p -> strEq p.Name "id" |> not) // convention: PK is named "id"
             let table = escape t.Name // convention: type name = table name
             let drop = sprintf "drop table if exists %s" table
             let fields = 
@@ -97,7 +97,9 @@ module Data =
         // convention: first field is ID
         let value = a |> Sql.recordValues |> Seq.head
         let name = "@i"
-        let sql = sprintf "delete from %s where id = %s" (escape <| a.GetType().Name) name
+        let sql = sprintf "delete from %s where id = %s" // convention: PK is called 'id'
+                    (escape <| a.GetType().Name) 
+                    name
         sql,[P(name,value)]
 
     let generateUpdate a =
@@ -110,7 +112,7 @@ module Data =
             |> Seq.map (fun f -> sprintf "%s=@%s" (escape f) f)
             |> Seq.toList
             |> String.concat ","
-        let sql = sprintf "update %s set %s where id = %s" 
+        let sql = sprintf "update %s set %s where id = %s" // convention: PK is called 'id'
                     (escape <| a.GetType().Name) 
                     fieldsAndParams 
                     idField
