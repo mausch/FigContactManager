@@ -24,6 +24,12 @@ module Data =
         Contact: int64
     }
 
+    let createConnection (connectionString: string) =
+        let conn = new System.Data.SQLite.SQLiteConnection(connectionString)
+        conn.Open()
+        conn :> IDbConnection
+
+
     let private strEq (a: string) (b: string) = 
         StringComparer.InvariantCultureIgnoreCase.Equals(a, b)
 

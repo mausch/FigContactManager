@@ -1,4 +1,4 @@
-﻿module FigContactManager.Tests.Data
+﻿module FigContactManager.Data.Tests
 
 open System
 open System.Collections.Generic
@@ -8,9 +8,8 @@ open Microsoft.FSharp.Reflection
 open FigContactManager.Data
 
 let createConnection() =
-    let conn = new System.Data.SQLite.SQLiteConnection("Data Source=:memory:;Version=3;New=True")
-    conn.Open()
-    conn :> IDbConnection
+    let cs = System.Configuration.ConfigurationManager.ConnectionStrings.["Sqlite_InMemory"].ConnectionString
+    createConnection cs
 
 [<Test>]
 let ``generate insert`` () =
