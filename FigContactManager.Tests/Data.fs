@@ -50,12 +50,6 @@ let ``generate update`` () =
 
 let tx = Tx.TransactionBuilder()
 
-let commitOrFail f =
-    function
-    | Tx.Commit x -> f x
-    | Tx.Failed e -> raise (Exception("", e))
-    | Tx.Rollback _ -> failwith "rollback"
-
 [<Test>]
 let ``create contact``() =
     use conn = createConnection()
@@ -70,7 +64,7 @@ let ``create contact``() =
             return i,j
         }
     insert mgr 
-    |> commitOrFail (fun (c1,c2) -> 
+    |> Tx.getOrFail (fun (c1,c2) -> 
                         Assert.AreEqual(1L, c1.Id)
                         Assert.AreEqual(2L, c2.Id))
 
@@ -80,7 +74,7 @@ let ``create group`` () =
     let mgr = Sql.withConnection conn
     createSchema conn [typeof<Group>]
     let newGroup = insertGroup { Id = 0L; Name = "Business" } |> Tx.map ignore
-    newGroup mgr |> commitOrFail ignore
+    newGroup mgr |> Tx.getOrFail ignore
 
 [<Test>]
 let ``delete group cascade`` () =
@@ -97,5 +91,5 @@ let ``delete group cascade`` () =
             let count = Option.get count
             Assert.AreEqual(0L, count)
         }
-    transaction mgr |> commitOrFail ignore
+    transaction mgr |> Tx.getOrFail ignore
 
