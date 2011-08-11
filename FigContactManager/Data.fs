@@ -72,7 +72,8 @@ module Data =
 
     let internal P = Sql.Parameter.make
 
-    let internal (>>=) f x = Tx.bind x f
+    let inline internal (>>=) f x = Tx.bind x f
+    let inline internal (>>.) x f = Tx.bind (fun _ -> x) f
 
     let internal selectLastId = "select last_insert_rowid();"
 
@@ -141,3 +142,9 @@ module Data =
     let deleteContactGroup (c: ContactGroup) =
         generateDelete c
         ||> Tx.execNonQueryi
+
+    let deleteContactGroupByGroup (c: Group) =
+        Tx.execNonQueryi "delete from ContactGroup where group = @g" [P("@g",c.Id)]
+
+    let deleteGroupCascade (c: Group) =
+        deleteContactGroupByGroup c >>. deleteGroup c

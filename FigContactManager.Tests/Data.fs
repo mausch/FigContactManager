@@ -69,3 +69,10 @@ let ``create contact``() =
         Assert.AreEqual(2L, c2.Id)
     | Tx.Failed e -> raise e
     | Tx.Rollback _ -> failwith "rollback"
+
+[<Test>]
+let ``delete group cascade`` () =
+    let tx = Tx.TransactionBuilder()
+    use conn = createConnection()
+    let mgr = Sql.withConnection conn
+    createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
