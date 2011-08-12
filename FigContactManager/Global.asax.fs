@@ -37,3 +37,7 @@ type MvcApplication() =
         get "" (content "Hi!")
         manageContactGroupsAction ||> action
         ()
+
+    member this.Application_End() =
+        let reason = System.Web.Hosting.HostingEnvironment.ShutdownReason.ToString()
+        printfn "Application_End. Reason: %s" reason
