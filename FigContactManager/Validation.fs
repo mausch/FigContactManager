@@ -26,4 +26,4 @@ let apv f x =
 let getOrFail =
     function
     | Choice1Of2 x -> x
-    | Choice2Of2 e -> failwith "Validation errors: %A" e
+    | Choice2Of2 e -> failwithf "Validation errors: %A" e
