@@ -139,6 +139,12 @@ module Data =
         ||> Tx.execScalar
         |> Tx.map Option.get
 
+    let generateFindAll (t: Type)  =
+        let sql = sprintf "select * from %s" (escape t.Name)
+        fun limitOffset ->
+            let limitOffset = limitOffset |> Option.fold (fun _ (l,o) -> sprintf " limit %d offset %d" l o) ""
+            sql + limitOffset
+
     type Contact with
         static member Insert (c: Contact) =
             genericInsert c
@@ -146,6 +152,9 @@ module Data =
         static member Delete (c: Contact) =
             generateDelete c
             ||> Tx.execNonQueryi
+        static member FindAll(?limitOffset) = 
+            let sql = generateFindAll typeof<Contact> limitOffset
+            Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Contact> ""))
 
     type ContactGroup with
         static member Insert (c: ContactGroup) =
@@ -166,4 +175,7 @@ module Data =
             ||> Tx.execNonQueryi
         static member DeleteCascade (c: Group) =
             ContactGroup.DeleteByGroup c >>. Group.Delete c
+        static member FindAll(?limitOffset) = 
+            let sql = generateFindAll typeof<Group> limitOffset
+            Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Group> ""))
     

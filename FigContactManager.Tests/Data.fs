@@ -46,7 +46,12 @@ let ``generate update`` () =
     Assert.AreEqual("nn", unbox p.["@Name"])
     Assert.AreEqual("pp", unbox p.["@Phone"])
     Assert.AreEqual("ee", unbox p.["@Email"])
-    
+
+[<Test>]
+let ``generate findall`` () =    
+    let sql = generateFindAll typeof<Group> (Some (20,50))
+    printfn "%s" sql
+    Assert.AreEqual("select * from \"Group\" limit 20 offset 50", sql)
 
 let tx = Tx.TransactionBuilder()
 
@@ -92,3 +97,19 @@ let ``delete group cascade`` () =
             Assert.AreEqual(0L, count)
         }
     transaction mgr |> Tx.getOrFail ignore
+
+[<Test>]
+let ``find all groups`` () =
+    use conn = createConnection()
+    let mgr = Sql.withConnection conn
+    createSchema conn [typeof<Group>]
+    let transaction =
+        tx {
+            let! business = Group.Insert { Id = 0L; Name = "Business" }
+            let! groups = Group.FindAll() |> Tx.map Seq.toList
+            Assert.AreEqual(1, groups.Length)
+            Assert.AreEqual(business, groups.[0])
+            return ()
+        }
+    transaction mgr |> Tx.getOrFail ignore
+    ()
