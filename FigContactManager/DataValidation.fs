@@ -14,9 +14,9 @@ let private nonEmpty msg x =
         then Choice2Of2 [msg]
         else Choice1Of2 x
 
-let private regex rx msg =
+let private regex rx =
     let rx = Regex(rx, RegexOptions.Compiled)
-    fun x ->
+    fun msg x ->
         if rx.IsMatch x
             then Choice1Of2 x
             else Choice2Of2 [msg]
