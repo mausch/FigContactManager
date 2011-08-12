@@ -6,6 +6,7 @@ open System.Web.Mvc
 open FigContactManager.Data
 open FigContactManager.DataValidation
 open FigContactManager.Validation
+open FigContactManager.Web
 open Figment
 
 type MvcApplication() =
@@ -13,8 +14,8 @@ type MvcApplication() =
 
     let tx = Tx.TransactionBuilder()
     let InitializeDatabase() =
-        let cs = System.Configuration.ConfigurationManager.ConnectionStrings.["sqlite"].ConnectionString
-        use conn = createConnection cs
+        printfn "Initializing database..."
+        use conn = createConnection connectionString
         createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
         let t =
             tx {
@@ -34,4 +35,5 @@ type MvcApplication() =
     member this.Application_Start() = 
         InitializeDatabase()
         get "" (content "Hi!")
+        manageContactGroupsAction ||> action
         ()
