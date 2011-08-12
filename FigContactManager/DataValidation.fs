@@ -22,8 +22,8 @@ let private regex rx msg =
             else Choice2Of2 [msg]
             
 let private phone =
-    // from http://msdn.microsoft.com/en-us/library/ff650303.aspx
-    regex @"^[01]?[- .]?(\([2-9]\d{2}\)|[2-9]\d{2})[- .]?\d{3}[- .]?\d{4}$"
+    // from http://stackoverflow.com/questions/123559/a-comprehensive-regex-for-phone-number-validation/123666#123666
+    regex @"^(?:(?:\+?1\s*(?:[.-]\s*)?)?(?:\(\s*([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9])\s*\)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))\s*(?:[.-]\s*)?)?([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\s*(?:[.-]\s*)?([0-9]{4})(?:\s*(?:#|x\.?|ext\.?|extension)\s*(\d+))?$"
         "Invalid phone number"
 
 let private email = 

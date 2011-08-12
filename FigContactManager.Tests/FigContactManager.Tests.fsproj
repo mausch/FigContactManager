@@ -38,6 +38,7 @@
     <None Include="packages.config" />
     <Compile Include="Assembly.fs" />
     <Compile Include="Data.fs" />
+    <Compile Include="DataValidation.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FsSql\FsSql\FsSql.fsproj">
