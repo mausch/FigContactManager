@@ -46,9 +46,7 @@
     <Compile Include="Web.fs" />
     <Compile Include="Global.asax.fs" />
     <Compile Include="Program.fs" />
-    <None Include="Web.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="Web.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
