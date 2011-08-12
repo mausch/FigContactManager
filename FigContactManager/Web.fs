@@ -30,8 +30,9 @@ let groupsView (groups: Group seq) =
         ]
     ]]
 
-let manageContactGroups cmgr = 
-    Group.FindAll() cmgr |> Tx.getOrFail id |> groupsView |> wbview 
+let manageContactGroups cmgr ctx = 
+    let html = Group.FindAll() cmgr |> Tx.getOrFail id |> groupsView
+    wbview html ctx
 
 let manageContactGroupsAction : RouteConstraint * FAction =
     (ifPathIs "Groups" &&. ifMethodIsGet), manageContactGroups connMgr
