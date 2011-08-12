@@ -57,8 +57,8 @@ let ``create contact``() =
     createSchema conn [typeof<Contact>]
     let insert =
         tx {
-            let! i = insertContact { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
-            let! j = insertContact { Id = 0L; Name = "George"; Phone = "555-4447"; Email = "george@example.com" }
+            let! i = Contact.Insert { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
+            let! j = Contact.Insert { Id = 0L; Name = "George"; Phone = "555-4447"; Email = "george@example.com" }
             printfn "%A" i
             printfn "%A" j
             return i,j
@@ -73,7 +73,7 @@ let ``create group`` () =
     use conn = createConnection()
     let mgr = Sql.withConnection conn
     createSchema conn [typeof<Group>]
-    let newGroup = insertGroup { Id = 0L; Name = "Business" } |> Tx.map ignore
+    let newGroup = Group.Insert { Id = 0L; Name = "Business" } |> Tx.map ignore
     newGroup mgr |> Tx.getOrFail ignore
 
 [<Test>]
@@ -83,13 +83,12 @@ let ``delete group cascade`` () =
     createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
     let transaction = 
         tx {
-            let! john = insertContact { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
-            let! business = insertGroup { Id = 0L; Name = "Business" }
-            let! john_business = insertContactGroup { Id = 0L; Group = business.Id; Contact = john.Id }
-            do! deleteGroupCascade business
+            let! john = Contact.Insert { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
+            let! business = Group.Insert { Id = 0L; Name = "Business" }
+            let! john_business = ContactGroup.Insert { Id = 0L; Group = business.Id; Contact = john.Id }
+            do! Group.DeleteCascade business
             let! count = Tx.execScalar "select count(*) from ContactGroup" []
             let count = Option.get count
             Assert.AreEqual(0L, count)
         }
     transaction mgr |> Tx.getOrFail ignore
-

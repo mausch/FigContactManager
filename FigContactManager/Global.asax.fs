@@ -15,7 +15,7 @@ type MvcApplication() =
         createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
         let t =
             tx {
-                let! john = insertContact { Contact.Id = 0L; Name = ""; Phone = ""; Email = "" }
+                let! john = Contact.Insert { Contact.Id = 0L; Name = ""; Phone = ""; Email = "" }
                 return 0
             }
         t (Sql.withConnection conn) |> Tx.getOrFail ignore

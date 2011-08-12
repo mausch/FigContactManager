@@ -12,17 +12,23 @@ module Data =
         Phone: string
         Email: string
     }
+    with static member New name phone email =
+            { Id = 0L; Name = name; Phone = phone; Email = email }
 
     type Group = {
         Id: int64
         Name: string
     }
+    with static member New name =
+            { Id = 0L; Name = name }
 
     type ContactGroup = {
         Id: int64
         Group: int64
         Contact: int64
     }
+    with static member New group contact =
+            { Id = 0L; Group = group; Contact = contact }
 
     let createConnection (connectionString: string) =
         let conn = new System.Data.SQLite.SQLiteConnection(connectionString)
@@ -133,32 +139,31 @@ module Data =
         ||> Tx.execScalar
         |> Tx.map Option.get
 
-    let insertContact (c: Contact) =
-        genericInsert c
-        |> Tx.map (fun newId -> { c with Id = newId })
+    type Contact with
+        static member Insert (c: Contact) =
+            genericInsert c
+            |> Tx.map (fun newId -> { c with Id = newId })
+        static member Delete (c: Contact) =
+            generateDelete c
+            ||> Tx.execNonQueryi
 
-    let deleteContact (c: Contact) =
-        generateDelete c
-        ||> Tx.execNonQueryi
+    type ContactGroup with
+        static member Insert (c: ContactGroup) =
+            genericInsert c
+            |> Tx.map (fun newId -> { c with Id = newId })
+        static member Delete (c: ContactGroup) =
+            generateDelete c
+            ||> Tx.execNonQueryi
+        static member DeleteByGroup (c: Group) =
+            Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c.Id)]
 
-    let insertGroup (c: Group) =
-        genericInsert c
-        |> Tx.map (fun newId -> { c with Id = newId })
-
-    let deleteGroup (c: Group) =
-        generateDelete c
-        ||> Tx.execNonQueryi
-
-    let insertContactGroup (c: ContactGroup) =
-        genericInsert c
-        |> Tx.map (fun newId -> { c with Id = newId })
-
-    let deleteContactGroup (c: ContactGroup) =
-        generateDelete c
-        ||> Tx.execNonQueryi
-
-    let deleteContactGroupByGroup (c: Group) =
-        Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c.Id)]
-
-    let deleteGroupCascade (c: Group) =
-        deleteContactGroupByGroup c >>. deleteGroup c
+    type Group with
+        static member Insert (c: Group) =
+            genericInsert c
+            |> Tx.map (fun newId -> { c with Id = newId })
+        static member private Delete (c: Group) =
+            generateDelete c
+            ||> Tx.execNonQueryi
+        static member DeleteCascade (c: Group) =
+            ContactGroup.DeleteByGroup c >>. Group.Delete c
+    
