@@ -31,7 +31,7 @@ let groupsView (groups: Group seq) =
     ]]
 
 let manageContactGroups cmgr ctx = 
-    let html = Group.FindAll() cmgr |> Tx.getOrFail id |> groupsView
+    let html = Group.FindAll() cmgr |> Tx.get |> groupsView
     wbview html ctx
 
 let manageContactGroupsAction : RouteConstraint * FAction =

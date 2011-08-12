@@ -29,7 +29,7 @@ type MvcApplication() =
                 return ()
             }
         let t = Tx.required t // run in a transaction
-        t (Sql.withConnection conn) |> Tx.getOrFail ignore
+        t (Sql.withConnection conn) |> Tx.get |> ignore
         ()
 
     member this.Application_Start() = 

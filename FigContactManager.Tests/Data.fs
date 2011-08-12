@@ -69,9 +69,10 @@ let ``create contact``() =
             return i,j
         }
     insert mgr 
-    |> Tx.getOrFail (fun (c1,c2) -> 
-                        Assert.AreEqual(1L, c1.Id)
-                        Assert.AreEqual(2L, c2.Id))
+    |> Tx.get
+    |> (fun (c1,c2) -> 
+            Assert.AreEqual(1L, c1.Id)
+            Assert.AreEqual(2L, c2.Id))
 
 [<Test>]
 let ``create group`` () =
@@ -79,7 +80,7 @@ let ``create group`` () =
     let mgr = Sql.withConnection conn
     createSchema conn [typeof<Group>]
     let newGroup = Group.Insert { Id = 0L; Name = "Business" } |> Tx.map ignore
-    newGroup mgr |> Tx.getOrFail ignore
+    newGroup mgr |> Tx.get |> ignore
 
 [<Test>]
 let ``delete group cascade`` () =
@@ -96,7 +97,7 @@ let ``delete group cascade`` () =
             let count = Option.get count
             Assert.AreEqual(0L, count)
         }
-    transaction mgr |> Tx.getOrFail ignore
+    transaction mgr |> Tx.get |> ignore
 
 [<Test>]
 let ``find all groups`` () =
@@ -111,5 +112,5 @@ let ``find all groups`` () =
             Assert.AreEqual(business, groups.[0])
             return ()
         }
-    transaction mgr |> Tx.getOrFail ignore
+    transaction mgr |> Tx.get |> ignore
     ()
