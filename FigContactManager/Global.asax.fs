@@ -41,6 +41,7 @@ type App() =
         App.InitializeDatabase connectionString |> ignore
         get "" (content "Hi!")
         manageGroupsAction ||> action
+        manageContactsAction ||> action
         ()
 
     member this.Application_End() =
