@@ -9,14 +9,11 @@ open FigContactManager.Validation
 open FigContactManager.Web
 open Figment
 
-type MvcApplication() =
+type App() =
     inherit HttpApplication()
 
-    let tx = Tx.TransactionBuilder()
-    let InitializeDatabase() =
-        printfn "Initializing database..."
-        use conn = createConnection connectionString
-        createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
+    static member AddSampleData conn =
+        let tx = Tx.TransactionBuilder()
         let t =
             tx {
                 let! john = Contact.TryNew "John" "555-1234" "john@example.com" |> getOrFail |> Contact.Insert
@@ -29,13 +26,21 @@ type MvcApplication() =
                 return ()
             }
         let t = Tx.required t // run in a transaction
-        t (Sql.withConnection conn) |> Tx.get |> ignore
-        ()
+        t conn |> Tx.get |> ignore
+
+    static member InitializeDatabase connectionString =
+        printfn "Initializing database..."
+        use conn = createConnection connectionString
+        createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
+        let connMgr = Sql.withConnection conn
+        App.AddSampleData connMgr
+        connMgr
+        
 
     member this.Application_Start() = 
-        InitializeDatabase()
+        App.InitializeDatabase connectionString |> ignore
         get "" (content "Hi!")
-        manageContactGroupsAction ||> action
+        manageGroupsAction ||> action
         ()
 
     member this.Application_End() =

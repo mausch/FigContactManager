@@ -8,10 +8,6 @@ open FigContactManager.Data
 
 let e = XhtmlElement()
 
-let connectionString = System.Configuration.ConfigurationManager.ConnectionStrings.["sqlite"].ConnectionString
-
-let connMgr = Sql.withNewConnection (fun () -> createConnection connectionString)
-
 let groupsView (groups: Group seq) = 
     [e.Html [
         e.Head [
@@ -30,9 +26,11 @@ let groupsView (groups: Group seq) =
         ]
     ]]
 
-let manageContactGroups cmgr ctx = 
-    let html = Group.FindAll() cmgr |> Tx.get |> groupsView
-    wbview html ctx
+let showAllGroups cmgr = 
+    Group.FindAll() cmgr |> Tx.get |> groupsView
 
-let manageContactGroupsAction : RouteConstraint * FAction =
-    (ifPathIs "Groups" &&. ifMethodIsGet), manageContactGroups connMgr
+let manageGroups cmgr ctx =
+    wbview (showAllGroups cmgr) ctx
+
+let manageGroupsAction : RouteConstraint * FAction =
+    (ifInsensitivePathIs "groups" &&. ifMethodIsGet), manageGroups connMgr

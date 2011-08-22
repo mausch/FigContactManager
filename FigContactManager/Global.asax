@@ -1,1 +1,1 @@
-﻿<%@ Application Codebehind="Global.asax.fs" Inherits="FigContactManager.MvcApplication, FigContactManager" Language="F#" %>
+﻿<%@ Application Codebehind="Global.asax.fs" Inherits="FigContactManager.App, FigContactManager" Language="F#" %>

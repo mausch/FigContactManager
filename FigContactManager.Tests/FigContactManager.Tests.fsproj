@@ -39,6 +39,7 @@
     <Compile Include="Assembly.fs" />
     <Compile Include="Data.fs" />
     <Compile Include="DataValidation.fs" />
+    <Compile Include="Web.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FsSql\FsSql\FsSql.fsproj">
@@ -76,6 +77,14 @@
       <Project>{a7ca8c9b-bab4-4647-9eb9-33c367e4620e}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WingBeats">
+      <HintPath>..\FsFormlets\lib\WingBeats.dll</HintPath>
+    </Reference>
+    <Reference Include="WingBeats.Xhtml">
+      <HintPath>..\FsFormlets\lib\WingBeats.Xhtml.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

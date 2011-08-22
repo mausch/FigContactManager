@@ -7,9 +7,7 @@ open MbUnit.Framework
 open Microsoft.FSharp.Reflection
 open FigContactManager.Data
 
-let createConnection() =
-    let cs = System.Configuration.ConfigurationManager.ConnectionStrings.["Sqlite_InMemory"].ConnectionString
-    createConnection cs
+let createConnection() = createConnection connectionString
 
 [<Test>]
 let ``generate insert`` () =

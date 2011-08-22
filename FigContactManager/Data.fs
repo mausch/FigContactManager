@@ -178,4 +178,7 @@ module Data =
         static member FindAll(?limitOffset) = 
             let sql = generateFindAll typeof<Group> limitOffset
             Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Group> ""))
+
+    let connectionString = System.Configuration.ConfigurationManager.ConnectionStrings.["sqlite"].ConnectionString
+    let connMgr = Sql.withNewConnection (fun () -> createConnection connectionString)
     
