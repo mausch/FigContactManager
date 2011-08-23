@@ -17,8 +17,34 @@ module Option =
         | Some x -> x
         | _ -> v
 
+type String =
+    static member prepend prefix s =
+        prefix + s
+
+type WebGetRoute =
+    | AllContacts
+    | AllGroups
+    | Error
+
+type WebPostRoute =
+    | DeleteContact of int64
+
+let mapWebGetRoute =
+    function
+    | AllContacts -> "contacts"
+    | AllGroups -> "groups"
+    | Error -> "error"
+
+let mapWebPostRoute =
+    function
+    | DeleteContact i -> "contacts/delete", ["id", i.ToString()]
+
 let getPath p = ifInsensitivePathIs p &&. ifMethodIsGet
 let postPath p = ifInsensitivePathIs p &&. ifMethodIsPost
+
+let getPathR x = mapWebGetRoute x |> getPath
+let postPathR x = mapWebPostRoute x |> fst |> postPath
+let redirectR x = mapWebGetRoute x |> String.prepend "/" |> redirect
 
 let e = XhtmlElement()
 let s = e.Shortcut
@@ -50,7 +76,7 @@ let inline postForm url content =
 let inline simplePostForm url text = 
     postForm url [ submit text ]
 
-let postFormValues text url values = 
+let postFormValues text (url, values) = 
     postForm url [
         for nv in values do
             yield hidden nv
@@ -67,7 +93,7 @@ let contactsView (contacts: Contact seq) =
             "Name", fun c -> [ &c.Name ]
             "Email", fun c -> [ &c.Email ]
             "Phone", fun c -> [ &c.Phone ]
-            "", fun c -> [ postFormValues "Delete" "/contacts/delete" ["id",c.Id.ToString()] ]
+            "", fun c -> [ postFormValues "Delete" (mapWebPostRoute (DeleteContact c.Id)) ]
         ])
 
 let showAllGroups cmgr = 
@@ -77,7 +103,7 @@ let manageGroups cmgr ctx =
     wbview (showAllGroups cmgr) ctx
 
 let manageGroupsAction : RouteConstraint * FAction =
-    getPath "groups", manageGroups connMgr
+    getPathR AllGroups, manageGroups connMgr
 
 let showAllContacts cmgr = 
     Contact.FindAll() cmgr |> Tx.get |> contactsView
@@ -86,7 +112,7 @@ let manageContacts cmgr ctx =
     wbview (showAllContacts cmgr) ctx
 
 let manageContactsAction : RouteConstraint * FAction =
-    getPath "contacts", manageContacts connMgr
+    getPathR AllContacts, manageContacts connMgr
 
 let deleteContact cmgr (ctx: ControllerContext) =
     let contactId = ctx.HttpContext.Request.Params.["id"]
@@ -94,9 +120,9 @@ let deleteContact cmgr (ctx: ControllerContext) =
         Int32.tryParse contactId
         |> Option.map (fun i -> 
                             Contact.DeleteCascade i cmgr |> Tx.get |> ignore
-                            redirect "/contacts")
-        |> Option.getOrElse (redirect "/error")
+                            redirectR AllContacts)
+        |> Option.getOrElse (redirectR Error)
     action ctx
 
 let deleteContactAction: RouteConstraint * FAction =
-    postPath "contacts/delete", deleteContact connMgr
+    postPath (mapWebPostRoute (DeleteContact 0L) |> fst), deleteContact connMgr

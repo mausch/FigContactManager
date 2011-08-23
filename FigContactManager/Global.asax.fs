@@ -42,6 +42,7 @@ type App() =
         get "" (content "Hi!")
         manageGroupsAction ||> action
         manageContactsAction ||> action
+        deleteContactAction ||> action
         ()
 
     member this.Application_End() =
