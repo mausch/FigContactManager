@@ -93,7 +93,7 @@ let deleteContact cmgr (ctx: ControllerContext) =
     let action = 
         Int32.tryParse contactId
         |> Option.map (fun i -> 
-                            Contact.DeleteById i cmgr |> Tx.get |> ignore
+                            Contact.DeleteCascade i cmgr |> Tx.get |> ignore
                             redirect "/contacts")
         |> Option.getOrElse (redirect "/error")
     action ctx

@@ -148,20 +148,6 @@ module Data =
             let limitOffset = limitOffset |> Option.fold (fun _ (l,o) -> sprintf " limit %d offset %d" l o) ""
             sql + limitOffset
 
-    type Contact with
-        static member Insert (c: Contact) =
-            genericInsert c
-            |> Tx.map (fun newId -> { c with Id = newId })
-        static member Delete (c: Contact) =
-            generateDelete c
-            ||> Tx.execNonQueryi
-        static member DeleteById i =
-            generateDeleteId (typeof<Contact>.GetType().Name) i
-            ||> Tx.execNonQueryi
-        static member FindAll(?limitOffset) = 
-            let sql = generateFindAll typeof<Contact> limitOffset
-            Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Contact> ""))
-
     type ContactGroup with
         static member Insert (c: ContactGroup) =
             genericInsert c
@@ -171,6 +157,24 @@ module Data =
             ||> Tx.execNonQueryi
         static member DeleteByGroup (c: Group) =
             Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c.Id)]
+        static member DeleteByContactId (cid: int) =
+            Tx.execNonQueryi "delete from ContactGroup where \"contact\" = @g" [P("@g",cid)]
+
+    type Contact with
+        static member Insert (c: Contact) =
+            genericInsert c
+            |> Tx.map (fun newId -> { c with Id = newId })
+        static member private Delete (c: Contact) =
+            generateDelete c
+            ||> Tx.execNonQueryi
+        static member private DeleteById i =
+            generateDeleteId (typeof<Contact>.GetType().Name) i
+            ||> Tx.execNonQueryi
+        static member DeleteCascade (c: int) =
+            ContactGroup.DeleteByContactId c >>. Contact.DeleteById c
+        static member FindAll(?limitOffset) = 
+            let sql = generateFindAll typeof<Contact> limitOffset
+            Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Contact> ""))
 
     type Group with
         static member Insert (c: Group) =
