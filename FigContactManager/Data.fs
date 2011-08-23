@@ -105,17 +105,17 @@ module Data =
         let parameters = Seq.zip names values |> Sql.parameters
         sql,parameters
 
-    let generateDeleteId t value = 
+    let generateDeleteId (t: Type) value = 
         let name = "@i"
         let sql = sprintf "delete from %s where id = %s" // convention: PK is called 'id'
-                    (escape <| t)
+                    (escape t.Name) // convention: type name = table name
                     name
         sql,[P(name,value)]
 
     let generateDelete a =
         // convention: first field is ID
         let value = a |> Sql.recordValues |> Seq.head
-        generateDeleteId (a.GetType().Name) value
+        generateDeleteId (a.GetType()) value
 
     let generateUpdate a =
         // convention: first field is ID
@@ -128,7 +128,7 @@ module Data =
             |> Seq.toList
             |> String.concat ","
         let sql = sprintf "update %s set %s where id = %s" // convention: PK is called 'id'
-                    (escape <| a.GetType().Name) 
+                    (escape <| a.GetType().Name) // convention: type name = table name
                     fieldsAndParams 
                     idField
         let values = a |> Sql.recordValues |> Seq.skip 1
@@ -143,7 +143,7 @@ module Data =
         |> Tx.map Option.get
 
     let generateFindAll (t: Type)  =
-        let sql = sprintf "select * from %s" (escape t.Name)
+        let sql = sprintf "select * from %s" (escape t.Name) // convention: type name = table name
         fun limitOffset ->
             let limitOffset = limitOffset |> Option.fold (fun _ (l,o) -> sprintf " limit %d offset %d" l o) ""
             sql + limitOffset
@@ -168,7 +168,7 @@ module Data =
             generateDelete c
             ||> Tx.execNonQueryi
         static member private DeleteById i =
-            generateDeleteId (typeof<Contact>.GetType().Name) i
+            generateDeleteId typeof<Contact> i
             ||> Tx.execNonQueryi
         static member DeleteCascade (c: int) =
             ContactGroup.DeleteByContactId c >>. Contact.DeleteById c
