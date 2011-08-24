@@ -9,7 +9,7 @@ let inline private (<*>) f x = apv f x
 let inline private (<!>) f x = Choice1Of2 f <*> x
 let inline private (>>=) f x = bind f x
 
-let private nonEmpty msg x =
+let nonEmpty msg x =
     if String.IsNullOrWhiteSpace x
         then Choice2Of2 [msg]
         else Choice1Of2 x
@@ -21,12 +21,12 @@ let private regex rx =
             then Choice1Of2 x
             else Choice2Of2 [msg]
             
-let private phone =
+let phone =
     // from http://stackoverflow.com/questions/123559/a-comprehensive-regex-for-phone-number-validation/123666#123666
     regex @"^(?:(?:\+?1\s*(?:[.-]\s*)?)?(?:\(\s*([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9])\s*\)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))\s*(?:[.-]\s*)?)?([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\s*(?:[.-]\s*)?([0-9]{4})(?:\s*(?:#|x\.?|ext\.?|extension)\s*(\d+))?$"
         "Invalid phone number"
 
-let private email = 
+let email = 
     // from http://msdn.microsoft.com/en-us/library/ff650303.aspx
     regex @"^(?("")("".+?""@)|(([0-9a-zA-Z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-zA-Z])@))(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,6}))$"
         "Invalid email address"

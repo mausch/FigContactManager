@@ -61,6 +61,7 @@
       <HintPath>..\packages\System.Data.SQLite.1.0.66.1\lib\System.Data.SQLite.DLL</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
     <ProjectReference Include="..\Figment\Figment\Figment.fsproj">
       <Name>Figment</Name>
@@ -83,9 +84,11 @@
       <Private>True</Private>
     </ProjectReference>
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Abstractions" />
     <Reference Include="System.Web.Mvc, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" />
     <Reference Include="System.Web.Routing" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="WingBeats">
       <HintPath>C:\prg\FigContactManager\FsFormlets\lib\WingBeats.dll</HintPath>
     </Reference>

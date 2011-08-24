@@ -12,8 +12,10 @@ module Data =
         Phone: string
         Email: string
     }
-    with static member New name phone email =
-            { Id = 0L; Name = name; Phone = phone; Email = email }
+    with 
+        static member NewWithId id name phone email = 
+            { Id = id; Name = name; Phone = phone; Email = email }
+        static member New = Contact.NewWithId 0L
 
     type Group = {
         Id: int64
@@ -148,6 +150,11 @@ module Data =
             let limitOffset = limitOffset |> Option.fold (fun _ (l,o) -> sprintf " limit %d offset %d" l o) ""
             sql + limitOffset
 
+    let generateGetById (t: Type) =
+        let name = "@i"
+        let sql = sprintf "select * from %s where id = %s" (escape t.Name) name // convention: type name = table name
+        fun (id: int) -> sql, [P(name, id)]
+
     type ContactGroup with
         static member Insert (c: ContactGroup) =
             genericInsert c
@@ -172,6 +179,10 @@ module Data =
             ||> Tx.execNonQueryi
         static member DeleteCascade (c: int) =
             ContactGroup.DeleteByContactId c >>. Contact.DeleteById c
+        static member GetById i =
+            generateGetById typeof<Contact> i
+            ||> Tx.execReader
+            |> Tx.map (Sql.mapFirst (Sql.asRecord<Contact> ""))
         static member FindAll(?limitOffset) = 
             let sql = generateFindAll typeof<Contact> limitOffset
             Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Contact> ""))

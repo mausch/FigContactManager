@@ -40,9 +40,8 @@ type App() =
     member this.Application_Start() = 
         App.InitializeDatabase connectionString |> ignore
         get "" (content "Hi!")
-        manageGroupsAction ||> action
-        manageContactsAction ||> action
-        deleteContactAction ||> action
+        let actions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction]
+        actions |> Seq.iter ((<||) action)
         ()
 
     member this.Application_End() =
