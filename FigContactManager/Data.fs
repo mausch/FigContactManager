@@ -16,6 +16,7 @@ module Data =
         static member NewWithId id name phone email = 
             { Id = id; Name = name; Phone = phone; Email = email }
         static member New = Contact.NewWithId 0L
+        static member Dummy = Contact.New "" "" ""
 
     type Group = {
         Id: int64
@@ -173,6 +174,9 @@ module Data =
             |> Tx.map (fun newId -> { c with Id = newId })
         static member private Delete (c: Contact) =
             generateDelete c
+            ||> Tx.execNonQueryi
+        static member Update (c: Contact) =
+            generateUpdate c
             ||> Tx.execNonQueryi
         static member private DeleteById i =
             generateDeleteId typeof<Contact> i

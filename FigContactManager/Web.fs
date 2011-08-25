@@ -11,6 +11,7 @@ open WingBeats.Xhtml
 open global.Formlets
 open FigContactManager.Data
 open WingBeats.Formlets
+open System.Xml.Linq
 
 module Option = 
     let getOrElse v =
@@ -51,6 +52,8 @@ let mapWebPostRoute =
     function
     | DeleteContact i -> "contacts/delete", ["id", i.ToString()]
     | SaveContact -> "contacts/save", []
+
+let saveContactUrl = mapWebPostRoute SaveContact |> fst |> String.prepend "/"
 
 let getPath p = ifInsensitivePathIs p &&. ifMethodIsGet
 let postPath p = ifInsensitivePathIs p &&. ifMethodIsPost
@@ -127,12 +130,12 @@ let contactFormlet (c: Contact) =
     <*> nameInput
     <*> phoneOrEmail
 
-let contactEdit (c: Contact) =
-    let formlet = !++ (contactFormlet c)
+let contactEdit (n: XNode list)=
     layout "Edit contact" 
         [
-            s.FormPost "" [
-                yield! formlet
+            s.FormPost saveContactUrl [
+                yield!!+ n
+                yield submit "Save"
             ]
         ]
 
@@ -172,9 +175,23 @@ let editContact cmgr (ctx: ControllerContext) =
     let action = 
         Int32.tryParse contactId
         |> Option.bind (fun i -> Contact.GetById i cmgr |> Tx.get)
-        |> Option.map (fun c -> wbview (contactEdit c))
+        |> Option.map (fun c -> wbview (contactEdit (contactFormlet c |> renderToXml)))
         |> Option.getOrElse (redirectR Error)
     action ctx
 
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
+
+let saveContact cmgr (ctx: ControllerContext) =
+    let contactResult = runPost (contactFormlet Contact.Dummy) ctx
+    let action = 
+        match contactResult with
+        | Success contact -> 
+            match Contact.Update contact cmgr with
+            | Tx.Commit _ -> redirectR AllContacts
+            | _ -> redirectR Error
+        | Failure (errorForm, _) -> wbview (contactEdit errorForm)
+    action ctx
+
+let saveContactAction: RouteConstraint * FAction = 
+    postPathR SaveContact, saveContact connMgr
