@@ -182,16 +182,16 @@ let editContact cmgr (ctx: ControllerContext) =
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
 
-let saveContact cmgr (ctx: ControllerContext) =
-    let contactResult = runPost (contactFormlet Contact.Dummy) ctx
-    let action = 
+let saveContact cmgr = 
+    result {
+        let! contactResult = runPost (contactFormlet Contact.Dummy)
         match contactResult with
         | Success contact -> 
             match Contact.Update contact cmgr with
-            | Tx.Commit _ -> redirectR AllContacts
-            | _ -> redirectR Error
-        | Failure (errorForm, _) -> wbview (contactEdit errorForm)
-    action ctx
+            | Tx.Commit _ -> do! redirectR AllContacts
+            | _ -> do! redirectR Error
+        | Failure (errorForm, _) -> do! wbview (contactEdit errorForm)
+    }
 
 let saveContactAction: RouteConstraint * FAction = 
     postPathR SaveContact, saveContact connMgr
