@@ -165,7 +165,7 @@ let deleteContact cmgr (ctx: ControllerContext) =
     action ctx
 
 let deleteContactAction: RouteConstraint * FAction =
-    postPath (mapWebPostRoute (DeleteContact 0L) |> fst), deleteContact connMgr
+    postPathR (DeleteContact 0L), deleteContact connMgr
 
 let editContact cmgr (ctx: ControllerContext) =
     let contactId = ctx.HttpContext.Request.QueryString.["id"]
