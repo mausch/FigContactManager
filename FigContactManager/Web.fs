@@ -15,6 +15,7 @@ open System.Xml.Linq
 
 type WebGetRoute =
     | AllContacts
+    | NewContact
     | EditContact of int64
     | AllGroups
     | Error
@@ -26,6 +27,7 @@ type WebPostRoute =
 let mapWebGetRoute =
     function
     | AllContacts -> "contacts"
+    | NewContact -> "contacts/new"
     | EditContact i -> sprintf "contacts/edit?id=%d" i
     | AllGroups -> "groups"
     | Error -> "error"
@@ -183,3 +185,8 @@ let saveContact cmgr =
 
 let saveContactAction: RouteConstraint * FAction = 
     postPathR SaveContact, saveContact connMgr
+
+let contactNewView = contactWriteView "New contact"
+
+let newContactAction: RouteConstraint * FAction = 
+    getPathR NewContact, emptyContactFormlet |> renderToXml |> contactNewView |> wbview
