@@ -92,6 +92,9 @@ module Data =
         let value = a |> Sql.recordValues |> Seq.head
         generateDeleteId (a.GetType()) value
 
+    let genericDelete c =
+        generateDelete c ||> Tx.execNonQueryi
+
     let generateUpdate a =
         // convention: first field is ID
         let idValue = a |> Sql.recordValues |> Seq.head
@@ -112,6 +115,9 @@ module Data =
         let parameters = P(idField, idValue)::parameters
         sql,parameters
 
+    let genericUpdate c = 
+        generateUpdate c ||> Tx.execNonQueryi
+
     let genericInsert c =
         generateInsert c 
         ||> Tx.execScalar
@@ -122,6 +128,10 @@ module Data =
         function
         | Some (l,o) -> sprintf "%s limit %d offset %d" sql l o
         | _ -> sql
+
+    let genericFindAll<'a> limitOffset =
+        let sql = generateFindAll typeof<'a> limitOffset
+        Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<'a> ""))
 
     let generateGetById (t: Type) =
         let name = "@i"

@@ -39,9 +39,7 @@ module Model =
         static member Insert (c: ContactGroup) =
             genericInsert c
             |> Tx.map (fun newId -> { c with Id = newId })
-        static member Delete (c: ContactGroup) =
-            generateDelete c
-            ||> Tx.execNonQueryi
+        static member Delete (c: ContactGroup) = genericDelete c
         static member DeleteByGroup (c: Group) =
             Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c.Id)]
         static member DeleteByContactId (cid: int) =
@@ -51,12 +49,8 @@ module Model =
         static member Insert (c: Contact) =
             genericInsert c
             |> Tx.map (fun newId -> { c with Id = newId })
-        static member private Delete (c: Contact) =
-            generateDelete c
-            ||> Tx.execNonQueryi
-        static member Update (c: Contact) =
-            generateUpdate c
-            ||> Tx.execNonQueryi
+        static member private Delete (c: Contact) = genericDelete c
+        static member Update (c: Contact) = genericUpdate c
         static member private DeleteById i =
             generateDeleteId typeof<Contact> i
             ||> Tx.execNonQueryi
@@ -66,22 +60,16 @@ module Model =
             generateGetById typeof<Contact> i
             ||> Tx.execReader
             |> Tx.map (Sql.mapFirst (Sql.asRecord<Contact> ""))
-        static member FindAll(?limitOffset) = 
-            let sql = generateFindAll typeof<Contact> limitOffset
-            Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Contact> ""))
+        static member FindAll(?limitOffset) = genericFindAll<Contact> limitOffset
 
     type Group with
         static member Insert (c: Group) =
             genericInsert c
             |> Tx.map (fun newId -> { c with Id = newId })
-        static member private Delete (c: Group) =
-            generateDelete c
-            ||> Tx.execNonQueryi
+        static member private Delete (c: Group) = genericDelete c
         static member DeleteCascade (c: Group) =
             ContactGroup.DeleteByGroup c >>. Group.Delete c
-        static member FindAll(?limitOffset) = 
-            let sql = generateFindAll typeof<Group> limitOffset
-            Tx.execReader sql [] |> Tx.map (Sql.map (Sql.asRecord<Group> ""))
+        static member FindAll(?limitOffset) = genericFindAll<Group> limitOffset
 
     let connectionString = System.Configuration.ConfigurationManager.ConnectionStrings.["sqlite"].ConnectionString
     let connMgr = Sql.withNewConnection (fun () -> createConnection connectionString)
