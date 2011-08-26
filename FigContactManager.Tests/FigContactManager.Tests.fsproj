@@ -42,6 +42,11 @@
     <Compile Include="Web.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FsFormlets\Formlets\Formlets.fsproj">
+      <Name>Formlets</Name>
+      <Project>{d628a18c-7c64-48cd-bc52-add7a88a8770}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\FsSql\FsSql\FsSql.fsproj">
       <Name>FsSql</Name>
       <Project>{f2570da4-5df1-4d5e-9534-b3f55606b3b5}</Project>
@@ -79,6 +84,7 @@
     </ProjectReference>
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="WingBeats">
       <HintPath>..\FsFormlets\lib\WingBeats.dll</HintPath>
     </Reference>
