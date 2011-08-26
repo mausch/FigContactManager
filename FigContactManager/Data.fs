@@ -125,5 +125,6 @@ module Data =
 
     let generateGetById (t: Type) =
         let name = "@i"
-        let sql = sprintf "select * from %s where id = %s" (escape t.Name) name // convention: type name = table name
-        fun (id: int) -> sql, [P(name, id)]
+        let sql = sprintf "select * from %s where id = %s" // convention: PK is named "id"
+                    (escape t.Name) name // convention: type name = table name
+        fun (id: int) -> sql, [P(name, id)] // convention: PK is int
