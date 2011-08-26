@@ -13,22 +13,6 @@ open FigContactManager.Data
 open WingBeats.Formlets
 open System.Xml.Linq
 
-module Option = 
-    let getOrElse v =
-        function
-        | Some x -> x
-        | _ -> v
-
-type String =
-    static member prepend prefix s =
-        prefix + s
-    static member split (sep: char) (s: string) =
-        s.Split [|sep|]
-
-module Array =
-    let nth i a = 
-        Array.get a i
-
 type WebGetRoute =
     | AllContacts
     | EditContact of int64
