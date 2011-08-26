@@ -2,7 +2,8 @@
 
 open MbUnit.Framework
 open FigContactManager.Data
-open FigContactManager.DataValidation
+open FigContactManager.Model
+open FigContactManager.ModelValidation
 
 [<Test>]
 let ``contact with invalid phone`` () =

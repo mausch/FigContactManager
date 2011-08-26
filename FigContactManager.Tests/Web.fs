@@ -4,6 +4,7 @@ open Formlets
 open MbUnit.Framework
 open FigContactManager
 open FigContactManager.Data
+open FigContactManager.Model
 open FigContactManager.Data.Tests
 open FigContactManager.Web
 open WingBeats

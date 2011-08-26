@@ -4,7 +4,8 @@ open System
 open System.Web
 open System.Web.Mvc
 open FigContactManager.Data
-open FigContactManager.DataValidation
+open FigContactManager.Model
+open FigContactManager.ModelValidation
 open FigContactManager.Validation
 open FigContactManager.Web
 open Figment

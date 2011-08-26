@@ -9,7 +9,7 @@ open WingBeats
 open WingBeats.Xml
 open WingBeats.Xhtml
 open global.Formlets
-open FigContactManager.Data
+open FigContactManager.Model
 open WingBeats.Formlets
 open System.Xml.Linq
 

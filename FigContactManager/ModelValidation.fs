@@ -1,8 +1,8 @@
-﻿module FigContactManager.DataValidation
+﻿module FigContactManager.ModelValidation
 
 open System
 open System.Text.RegularExpressions
-open FigContactManager.Data
+open FigContactManager.Model
 open FigContactManager.Validation
 
 let inline private (<*>) f x = apv f x

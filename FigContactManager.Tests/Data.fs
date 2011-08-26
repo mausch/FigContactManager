@@ -6,6 +6,7 @@ open System.Data
 open MbUnit.Framework
 open Microsoft.FSharp.Reflection
 open FigContactManager.Data
+open FigContactManager.Model
 
 let createConnection() = createConnection connectionString
 

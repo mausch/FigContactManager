@@ -42,7 +42,8 @@
     <Compile Include="Extensions.fs" />
     <Compile Include="Validation.fs" />
     <Compile Include="Data.fs" />
-    <Compile Include="DataValidation.fs" />
+    <Compile Include="Model.fs" />
+    <Compile Include="ModelValidation.fs" />
     <Compile Include="Web.fs" />
     <Compile Include="Global.asax.fs" />
     <Compile Include="Program.fs" />
