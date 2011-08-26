@@ -116,29 +116,6 @@ let contactsView (contacts: Contact seq) =
             "", fun c -> [ link "Edit" (makeEditContactUrl c.Id) ]
         ]]
 
-let contactFormlet (c: Contact) =
-    let idHidden = pickler c.Id
-    let nameInput = f.Text(c.Name, required = true) |> f.WithLabel "Name"
-    let phoneInput = f.Tel(c.Phone) |> f.WithLabel "Phone:"
-    let emailInput = f.Email(c.Email) |> f.WithLabel "Email:"
-    let phoneOrEmail = yields t2 <*> phoneInput <*> emailInput
-    let nonEmpty = String.IsNullOrWhiteSpace >> not
-    let oneNonEmpty (a,b) = nonEmpty a || nonEmpty b
-    let phoneOrEmail = phoneOrEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
-    yields (fun i n (p,e) -> Contact.NewWithId i n p e)
-    <*> idHidden
-    <*> nameInput
-    <*> phoneOrEmail
-
-let contactEdit (n: XNode list)=
-    layout "Edit contact" 
-        [
-            s.FormPost saveContactUrl [
-                yield!!+ n
-                yield submit "Save"
-            ]
-        ]
-
 let showAllGroups cmgr = 
     Group.FindAll() cmgr |> Tx.get |> groupsView
 
@@ -170,12 +147,39 @@ let deleteContact cmgr (ctx: ControllerContext) =
 let deleteContactAction: RouteConstraint * FAction =
     postPathR (DeleteContact 0L), deleteContact connMgr
 
+let contactFormlet (c: Contact) =
+    let idHidden = pickler c.Id
+    let nameInput = f.Text(c.Name, required = true) |> f.WithLabel "Name"
+    let phoneInput = f.Tel(c.Phone) |> f.WithLabel "Phone:"
+    let emailInput = f.Email(c.Email) |> f.WithLabel "Email:"
+    let phoneOrEmail = yields t2 <*> phoneInput <*> emailInput
+    let nonEmpty = String.IsNullOrWhiteSpace >> not
+    let oneNonEmpty (a,b) = nonEmpty a || nonEmpty b
+    let phoneOrEmail = phoneOrEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
+    yields (fun i n (p,e) -> Contact.NewWithId i n p e)
+    <*> idHidden
+    <*> nameInput
+    <*> phoneOrEmail
+
+let emptyContactFormlet = contactFormlet Contact.Dummy
+
+let contactWriteView title (n: XNode list)=
+    layout title
+        [
+            s.FormPost saveContactUrl [
+                yield!!+ n
+                yield submit "Save"
+            ]
+        ]
+
+let contactEditView = contactWriteView "Edit contact"
+
 let editContact cmgr (ctx: ControllerContext) =
     let contactId = ctx.HttpContext.Request.QueryString.["id"]
     let action = 
         Int32.tryParse contactId
         |> Option.bind (fun i -> Contact.GetById i cmgr |> Tx.get)
-        |> Option.map (fun c -> wbview (contactEdit (contactFormlet c |> renderToXml)))
+        |> Option.map (fun c -> wbview (contactEditView (contactFormlet c |> renderToXml)))
         |> Option.getOrElse (redirectR Error)
     action ctx
 
@@ -184,13 +188,13 @@ let editContactAction: RouteConstraint * FAction =
 
 let saveContact cmgr = 
     result {
-        let! contactResult = runPost (contactFormlet Contact.Dummy)
+        let! contactResult = runPost emptyContactFormlet
         match contactResult with
         | Success contact -> 
             match Contact.Update contact cmgr with
             | Tx.Commit _ -> do! redirectR AllContacts
             | _ -> do! redirectR Error
-        | Failure (errorForm, _) -> do! wbview (contactEdit errorForm)
+        | Failure (errorForm, _) -> do! wbview (contactEditView errorForm)
     }
 
 let saveContactAction: RouteConstraint * FAction = 
