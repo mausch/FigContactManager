@@ -177,7 +177,7 @@ let saveContact cmgr =
         let! contactResult = runPost emptyContactFormlet
         match contactResult with
         | Success contact -> 
-            match Contact.Update contact cmgr with
+            match Contact.Upsert contact cmgr with
             | Tx.Commit _ -> do! redirectR AllContacts
             | _ -> do! redirectR Error
         | Failure (errorForm, _) -> do! wbview (contactEditView errorForm)

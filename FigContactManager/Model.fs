@@ -51,6 +51,10 @@ module Model =
             |> Tx.map (fun newId -> { c with Id = newId })
         static member private Delete (c: Contact) = genericDelete c
         static member Update (c: Contact) = genericUpdate c
+        static member Upsert (c: Contact) = 
+            if c.Id = Contact.Dummy.Id
+                then Contact.Insert c
+                else Contact.Update c |> Tx.map (fun _ -> c)
         static member private DeleteById i =
             generateDeleteId typeof<Contact> i
             ||> Tx.execNonQueryi
