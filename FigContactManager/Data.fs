@@ -120,7 +120,10 @@ module Data =
     let generateFindAll (t: Type)  =
         let sql = sprintf "select * from %s" (escape t.Name) // convention: type name = table name
         fun limitOffset ->
-            let limitOffset = limitOffset |> Option.fold (fun _ (l,o) -> sprintf " limit %d offset %d" l o) ""
+            let limitOffset = 
+                match limitOffset with
+                | Some (l,o) -> sprintf " limit %d offset %d" l o
+                | _ -> ""
             sql + limitOffset
 
     let generateGetById (t: Type) =
