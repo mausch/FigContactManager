@@ -9,13 +9,14 @@ open FigContactManager.Data
 module Model =
     type Contact = {
         Id: int64
+        Version: int64
         Name: string
         Phone: string
         Email: string
     }
     with 
         static member NewWithId id name phone email = 
-            { Id = id; Name = name; Phone = phone; Email = email }
+            { Id = id; Name = name; Phone = phone; Email = email; Version = 0L }
         static member New = Contact.NewWithId 0L
         static member Dummy = Contact.New "" "" ""
 

@@ -12,7 +12,7 @@ let createConnection() = createConnection connectionString
 
 [<Test>]
 let ``generate insert`` () =
-    let sql,p = generateInsert { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
+    let sql,p = generateInsert (Contact.New "John" "555-1234" "john@example.com")
     let p = Seq.toList p
     printfn "%s" sql
     Assert.AreEqual("insert into Contact (Id,Name,Phone,Email) values (null, @Name,@Phone,@Email); select last_insert_rowid();", sql)
@@ -26,7 +26,7 @@ let ``generate insert`` () =
 
 [<Test>]
 let ``generate delete`` () =
-    let sql,p = generateDelete { Name = ""; Id = 2L; Phone = ""; Email = "" }
+    let sql,p = generateDelete (Contact.NewWithId 2L "" "" "")
     let p = Seq.toList p
     printfn "%s" sql
     Assert.AreEqual("delete from Contact where id = @i", sql)
@@ -36,7 +36,7 @@ let ``generate delete`` () =
 
 [<Test>]
 let ``generate update`` () =
-    let sql,p = generateUpdate { Name = "nn"; Id = 2L; Phone = "pp"; Email = "ee" }
+    let sql,p = generateUpdate (Contact.NewWithId 2L "nn" "pp" "ee")
     let p = p |> Seq.map (fun p -> p.ParameterName, p.Value) |> dict
     printfn "%s" sql
     Assert.AreEqual("update Contact set Name=@Name,Phone=@Phone,Email=@Email where id = @id", sql)
@@ -45,6 +45,20 @@ let ``generate update`` () =
     Assert.AreEqual("nn", unbox p.["@Name"])
     Assert.AreEqual("pp", unbox p.["@Phone"])
     Assert.AreEqual("ee", unbox p.["@Email"])
+
+[<Test>]
+let ``generate versioned update``() =
+    let sql,p = generateVersionedUpdate (Contact.New "name" "phone" "mail")
+    printfn "%s" sql
+    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id and version = @oldversion", sql)
+    printfn "%A" p
+    let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
+    Assert.AreEqual("name", unbox p.["@Name"])
+    Assert.AreEqual("phone", unbox p.["@Phone"])
+    Assert.AreEqual("mail", unbox p.["@Email"])
+    Assert.AreEqual(0L, unbox p.["@oldversion"])
+    Assert.AreEqual(1L, unbox p.["@Version"])
+    ()
 
 [<Test>]
 let ``generate findall`` () =    
@@ -61,8 +75,8 @@ let ``create contact``() =
     createSchema conn [typeof<Contact>]
     let insert =
         tx {
-            let! i = Contact.Insert { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
-            let! j = Contact.Insert { Id = 0L; Name = "George"; Phone = "555-4447"; Email = "george@example.com" }
+            let! i = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
+            let! j = Contact.Insert (Contact.New "George" "555-4447" "george@example.com")
             printfn "%A" i
             printfn "%A" j
             return i,j
@@ -88,7 +102,7 @@ let ``delete group cascade`` () =
     createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
     let transaction = 
         tx {
-            let! john = Contact.Insert { Id = 0L; Name = "John"; Phone = "555-1234"; Email = "john@example.com" }
+            let! john = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
             let! business = Group.Insert { Id = 0L; Name = "Business" }
             let! john_business = ContactGroup.Insert { Id = 0L; Group = business.Id; Contact = john.Id }
             do! Group.DeleteCascade business

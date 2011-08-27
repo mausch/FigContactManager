@@ -115,6 +115,36 @@ module Data =
         let parameters = P(idField, idValue)::parameters
         sql,parameters
 
+    let generateVersionedUpdate a =
+        let idField = "@id"
+        let versionField = "@oldversion"
+        let recordValues = a |> Sql.recordValues |> Seq.toList
+        let idValue = recordValues |> Seq.head // convention: first field is ID
+        let oldVersion = recordValues |> Seq.nth 1 |> unbox // convention: second field is version
+        let newVersion = oldVersion + 1L // convention: version field is int64
+        let recordFields = a.GetType() |> Sql.recordFields
+        let allFieldsButId = recordFields |> Seq.skip 1 |> Seq.toList
+        let allFieldsButIdAndVersion = allFieldsButId |> Seq.skip 1 |> Seq.toList
+        let fieldsAndParams = 
+            allFieldsButId
+            |> Seq.map (fun f -> sprintf "%s=@%s" (escape f) f)
+            |> Seq.toList
+            |> String.concat ","
+        // convention: PK is called 'id'
+        // convention: concurrency version field is called 'version'
+        let sql = sprintf "update %s set %s where id = %s and version = %s" 
+                    (escape <| a.GetType().Name) // convention: type name = table name
+                    fieldsAndParams 
+                    idField
+                    versionField
+        let values = recordValues |> Seq.skip 2 |> Seq.toList
+        let values = (box newVersion)::values
+        let names = allFieldsButId |> Seq.map (sprintf "@%s")
+        let parameters = Seq.zip names values |> Sql.parameters |> Seq.toList
+        let parameters = P(idField, idValue)::parameters
+        let parameters = P(versionField, oldVersion)::parameters
+        sql,parameters
+
     let genericUpdate c = 
         generateUpdate c ||> Tx.execNonQueryi
 
