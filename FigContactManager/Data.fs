@@ -132,7 +132,7 @@ module Data =
             |> String.concat ","
         // convention: PK is called 'id'
         // convention: concurrency version field is called 'version'
-        let sql = sprintf "update %s set %s where id = %s and version = %s" 
+        let sql = sprintf "update %s set %s where id = %s and version = %s; select changes()"
                     (escape <| a.GetType().Name) // convention: type name = table name
                     fieldsAndParams 
                     idField
@@ -147,6 +147,13 @@ module Data =
 
     let genericUpdate c = 
         generateUpdate c ||> Tx.execNonQueryi
+
+    let genericVersionedUpdate (incrVersion: 'a -> 'a) c = 
+        generateVersionedUpdate c 
+        ||> Tx.execScalar
+        |> Tx.map (function
+                    | None | Some 0L -> None
+                    | Some _ -> Some (incrVersion c))
 
     let genericInsert c =
         generateInsert c 

@@ -135,6 +135,7 @@ let deleteContactAction: RouteConstraint * FAction =
 
 let contactFormlet (c: Contact) =
     let idHidden = pickler c.Id
+    let versionHidden = pickler c.Version
     let nameInput = f.Text(c.Name, required = true) |> f.WithLabel "Name"
     let phoneInput = f.Tel(c.Phone) |> f.WithLabel "Phone:"
     let emailInput = f.Email(c.Email) |> f.WithLabel "Email:"
@@ -142,30 +143,33 @@ let contactFormlet (c: Contact) =
     let nonEmpty = String.IsNullOrWhiteSpace >> not
     let oneNonEmpty (a,b) = nonEmpty a || nonEmpty b
     let phoneOrEmail = phoneOrEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
-    yields (fun i n (p,e) -> Contact.NewWithId i n p e)
+    yields (fun i v n (p,e) -> { Contact.Id = i; Version = v; Name = n; Phone = p; Email = e })
     <*> idHidden
+    <*> versionHidden
     <*> nameInput
     <*> phoneOrEmail
 
 let emptyContactFormlet = contactFormlet Contact.Dummy
 
-let contactWriteView title (n: XNode list)=
+let contactWriteView title err (n: XNode list)=
     layout title
         [
             s.FormPost saveContactUrl [
                 yield!!+ n
-                yield submit "Save"
+                yield e.P [ submit "Save" ]
+                yield e.P [ &err ]
             ]
         ]
 
 let contactEditView = contactWriteView "Edit contact"
+let contactEditOkView = contactEditView ""
 
 let editContact cmgr (ctx: ControllerContext) =
     let contactId = ctx.HttpContext.Request.QueryString.["id"]
     let action = 
         Int32.tryParse contactId
         |> Option.bind (fun i -> Contact.GetById i cmgr |> Tx.get)
-        |> Option.map (fun c -> wbview (contactEditView (contactFormlet c |> renderToXml)))
+        |> Option.map (fun c -> wbview (contactEditOkView (contactFormlet c |> renderToXml)))
         |> Option.getOrElse (redirectR Error)
     action ctx
 
@@ -176,17 +180,18 @@ let saveContact cmgr =
     result {
         let! contactResult = runPost emptyContactFormlet
         match contactResult with
-        | Success contact -> 
+        | populatedForm, _, Some contact -> 
             match Contact.Upsert contact cmgr with
-            | Tx.Commit _ -> do! redirectR AllContacts
+            | Tx.Commit (Some _) -> do! redirectR AllContacts
+            | Tx.Commit None -> do! wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
             | _ -> do! redirectR Error
-        | Failure (errorForm, _) -> do! wbview (contactEditView errorForm)
+        | errorForm, _, None -> do! wbview (contactEditOkView errorForm)
     }
 
 let saveContactAction: RouteConstraint * FAction = 
     postPathR SaveContact, saveContact connMgr
 
-let contactNewView = contactWriteView "New contact"
+let contactNewView = contactWriteView "New contact" ""
 
 let newContactAction: RouteConstraint * FAction = 
     getPathR NewContact, emptyContactFormlet |> renderToXml |> contactNewView |> wbview

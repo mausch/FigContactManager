@@ -15,6 +15,7 @@ module Model =
         Email: string
     }
     with 
+        static member IncrVersion (a: Contact) = { a with Version = a.Version + 1L }
         static member NewWithId id name phone email = 
             { Id = id; Name = name; Phone = phone; Email = email; Version = 0L }
         static member New = Contact.NewWithId 0L
@@ -51,11 +52,11 @@ module Model =
             genericInsert c
             |> Tx.map (fun newId -> { c with Id = newId })
         static member private Delete (c: Contact) = genericDelete c
-        static member Update (c: Contact) = genericUpdate c
+        static member Update (c: Contact) = genericVersionedUpdate Contact.IncrVersion c
         static member Upsert (c: Contact) = 
             if c.Id = Contact.Dummy.Id
-                then Contact.Insert c
-                else Contact.Update c |> Tx.map (fun _ -> c)
+                then Contact.Insert c |> Tx.map Some
+                else Contact.Update c
         static member private DeleteById i =
             generateDeleteId typeof<Contact> i
             ||> Tx.execNonQueryi
