@@ -164,14 +164,79 @@ let contactWriteView title err (n: XNode list)=
 let contactEditView = contactWriteView "Edit contact"
 let contactEditOkView = contactEditView ""
 
-let editContact cmgr (ctx: ControllerContext) =
+// monadic with named operators
+let editContact cmgr =
+    getQueryString "id"
+    |> Result.bind 
+        (function
+         | None -> redirectR Error
+         | Some contactId -> 
+            Int32.tryParse contactId
+            |> Option.bind (fun i ->
+                                match Contact.GetById i cmgr with
+                                | Tx.Commit c -> c
+                                | _ -> None)
+            |> Option.map (fun c -> 
+                                let editFormlet = contactFormlet c |> renderToXml
+                                let view = contactEditOkView editFormlet
+                                wbview view)
+            |> Option.getOrElse (redirectR Error))
+
+type MaybeBuilder() =
+    member x.Bind(m,f) = Option.bind f m
+    member x.Return a = Some a
+
+let maybe = MaybeBuilder()
+
+// monadic using computation expressions
+let editContact4 cmgr =
+    result {
+        let! contactId = getQueryString "id"
+        let contact = 
+            maybe {
+                let! contactId = contactId // not very intuitive
+                let! contactId = Int32.tryParse contactId
+                let! contact = 
+                    match Contact.GetById contactId cmgr with
+                    | Tx.Commit c -> c
+                    | _ -> None
+                return contact
+            }
+        do! match contact with 
+            | None -> redirectR Error 
+            | Some c -> 
+                let editFormlet = contactFormlet c |> renderToXml
+                let view = contactEditOkView editFormlet
+                wbview view
+    }
+
+// alternative, only using option monad
+let editContact2 cmgr (ctx: ControllerContext) =
     let contactId = ctx.HttpContext.Request.QueryString.["id"]
     let action = 
         Int32.tryParse contactId
-        |> Option.bind (fun i -> Contact.GetById i cmgr |> Tx.get)
+        |> Option.bind (fun i -> Contact.GetById i cmgr |> Tx.get) // doesn't handle tx fail
         |> Option.map (fun c -> wbview (contactEditOkView (contactFormlet c |> renderToXml)))
         |> Option.getOrElse (redirectR Error)
     action ctx
+
+// alternative, no-monad, only pattern matching
+let editContact3 cmgr ctx =
+    match getQueryString "id" ctx with
+    | None -> redirectR Error ctx
+    | Some contactId ->
+        match Int32.tryParse contactId with
+        | None -> redirectR Error ctx
+        | Some contactId -> 
+            match Contact.GetById contactId cmgr with
+            | Tx.Commit contact ->
+                match contact with
+                | None -> redirectR Error ctx
+                | Some contact -> 
+                    let editFormlet = contactFormlet contact |> renderToXml
+                    let view = contactEditOkView editFormlet
+                    wbview view ctx
+            | _ -> redirectR Error ctx
 
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
