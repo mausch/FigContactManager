@@ -120,6 +120,9 @@ let manageContacts cmgr ctx =
 let manageContactsAction : RouteConstraint * FAction =
     getPathR AllContacts, manageContacts connMgr
 
+let idVersionFormlet (idVersion: int64 * int64) = pickler idVersion
+let emptyIdVersionFormlet = idVersionFormlet (0L,0L)
+
 let deleteContact cmgr (ctx: ControllerContext) =
     let contactId = ctx.HttpContext.Request.Params.["id"]
     let action = 
@@ -134,18 +137,18 @@ let deleteContactAction: RouteConstraint * FAction =
     postPathR (DeleteContact 0L), deleteContact connMgr
 
 let contactFormlet (c: Contact) =
-    let idHidden = pickler c.Id
-    let versionHidden = pickler c.Version
+    let idVersion = idVersionFormlet (c.Id, c.Version)
     let nameInput = f.Text(c.Name, required = true) |> f.WithLabel "Name"
-    let phoneInput = f.Tel(c.Phone) |> f.WithLabel "Phone:"
-    let emailInput = f.Email(c.Email) |> f.WithLabel "Email:"
-    let phoneOrEmail = yields t2 <*> phoneInput <*> emailInput
-    let nonEmpty = String.IsNullOrWhiteSpace >> not
-    let oneNonEmpty (a,b) = nonEmpty a || nonEmpty b
-    let phoneOrEmail = phoneOrEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
-    yields (fun i v n (p,e) -> { Contact.Id = i; Version = v; Name = n; Phone = p; Email = e })
-    <*> idHidden
-    <*> versionHidden
+    let phoneOrEmail = 
+        let phoneInput = f.Tel(c.Phone) |> f.WithLabel "Phone:"
+        let emailInput = f.Email(c.Email) |> f.WithLabel "Email:"
+        let phoneOrEmail = yields t2 <*> phoneInput <*> emailInput
+        let nonEmpty = String.IsNullOrWhiteSpace >> not
+        let oneNonEmpty (a,b) = nonEmpty a || nonEmpty b
+        phoneOrEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
+
+    yields (fun (i,v) n (p,e) -> { Contact.Id = i; Version = v; Name = n; Phone = p; Email = e })
+    <*> idVersion
     <*> nameInput
     <*> phoneOrEmail
 
