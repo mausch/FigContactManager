@@ -244,14 +244,25 @@ let editContactAction: RouteConstraint * FAction =
 let saveContact cmgr = 
     result {
         let! contactResult = runPost emptyContactFormlet
-        match contactResult with
+        do! match contactResult with
+            | populatedForm, _, Some contact -> 
+                match Contact.Upsert contact cmgr with
+                | Tx.Commit (Some _) -> redirectR AllContacts
+                | Tx.Commit None -> wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
+                | _ -> redirectR Error
+            | errorForm, _, None -> wbview (contactEditOkView errorForm)
+    }
+
+// alternative using monadic operators
+let saveContact2 cmgr = 
+    runPost emptyContactFormlet
+    >>= function
         | populatedForm, _, Some contact -> 
             match Contact.Upsert contact cmgr with
-            | Tx.Commit (Some _) -> do! redirectR AllContacts
-            | Tx.Commit None -> do! wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
-            | _ -> do! redirectR Error
-        | errorForm, _, None -> do! wbview (contactEditOkView errorForm)
-    }
+            | Tx.Commit (Some _) -> redirectR AllContacts
+            | Tx.Commit None -> wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
+            | _ -> redirectR Error
+        | errorForm, _, None -> wbview (contactEditOkView errorForm)
 
 let saveContactAction: RouteConstraint * FAction = 
     postPathR SaveContact, saveContact connMgr
