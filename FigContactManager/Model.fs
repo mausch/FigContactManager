@@ -44,7 +44,7 @@ module Model =
         static member Delete (c: ContactGroup) = genericDelete c
         static member DeleteByGroup (c: Group) =
             Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c.Id)]
-        static member DeleteByContactId (cid: int) =
+        static member DeleteByContactId (cid: int64) =
             Tx.execNonQueryi "delete from ContactGroup where \"contact\" = @g" [P("@g",cid)]
 
     type Contact with
@@ -57,11 +57,11 @@ module Model =
             if c.Id = Contact.Dummy.Id
                 then Contact.Insert c |> Tx.map Some
                 else Contact.Update c
-        static member private DeleteById i =
-            generateDeleteId typeof<Contact> i
-            ||> Tx.execNonQueryi
-        static member DeleteCascade (c: int) =
-            ContactGroup.DeleteByContactId c >>. Contact.DeleteById c
+        static member private DeleteById i version =
+            genericVersionedDeleteId typeof<Contact> i version
+        static member DeleteCascade (c: int64) (version: int64) =
+            ContactGroup.DeleteByContactId c 
+            |> Tx.combine (Contact.DeleteById c version)
         static member GetById i =
             generateGetById typeof<Contact> i
             ||> Tx.execReader

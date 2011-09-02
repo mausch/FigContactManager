@@ -18,10 +18,10 @@ type WebGetRoute =
     | NewContact
     | EditContact of int64
     | AllGroups
-    | Error
+    | Error of string
 
 type WebPostRoute =
-    | DeleteContact of int64
+    | DeleteContact
     | SaveContact
 
 let mapWebGetRoute =
@@ -30,22 +30,22 @@ let mapWebGetRoute =
     | NewContact -> "contacts/new"
     | EditContact i -> sprintf "contacts/edit?id=%d" i
     | AllGroups -> "groups"
-    | Error -> "error"
+    | Error e -> "error?e=" + urlencode e
 
 let makeEditContactUrl i = EditContact i |> mapWebGetRoute |> String.prepend "/"
 
 let mapWebPostRoute =
     function
-    | DeleteContact i -> "contacts/delete", ["id", i.ToString()]
-    | SaveContact -> "contacts/save", []
+    | DeleteContact -> "contacts/delete"
+    | SaveContact -> "contacts/save"
 
-let saveContactUrl = mapWebPostRoute SaveContact |> fst |> String.prepend "/"
+let saveContactUrl = mapWebPostRoute SaveContact |> String.prepend "/"
 
 let getPath p = ifInsensitivePathIs p &&. ifMethodIsGet
 let postPath p = ifInsensitivePathIs p &&. ifMethodIsPost
 
 let getPathR x = mapWebGetRoute x |> String.split '?' |> Array.nth 0 |> getPath
-let postPathR x = mapWebPostRoute x |> fst |> postPath
+let postPathR x = mapWebPostRoute x |> postPath
 let redirectR x = mapWebGetRoute x |> String.prepend "/" |> redirect
 
 let e = XhtmlElement()
@@ -79,10 +79,9 @@ let inline postForm url content =
 let inline simplePostForm url text = 
     postForm url [ submit text ]
 
-let postFormValues text (url, values) = 
+let postFormlet text url formlet =
     postForm url [
-        for nv in values do
-            yield ihidden nv
+        yield! !++ formlet
         yield submit text
     ]
 
@@ -92,15 +91,21 @@ let groupsView (groups: Group seq) =
     layout "Manage contact groups"
         [makeTable groups ["Group name", fun c -> [ &c.Name ]]]
 
-let contactsView (contacts: Contact seq) = 
+let idVersionFormlet (idVersion: int64 * int64) = pickler idVersion
+let emptyIdVersionFormlet = idVersionFormlet (0L,0L)
+
+let contactsView (contacts: Contact seq) error = 
     layout "Manage contacts"
-        [makeTable contacts [
-            "Name", fun c -> [ &c.Name ]
-            "Email", fun c -> [ &c.Email ]
-            "Phone", fun c -> [ &c.Phone ]
-            "", fun c -> [ postFormValues "Delete" (mapWebPostRoute (DeleteContact c.Id)) ]
-            "", fun c -> [ link "Edit" (makeEditContactUrl c.Id) ]
-        ]]
+        [
+            makeTable contacts [
+                "Name", fun c -> [ &c.Name ]
+                "Email", fun c -> [ &c.Email ]
+                "Phone", fun c -> [ &c.Phone ]
+                "", fun c -> [ postFormlet "Delete" (mapWebPostRoute DeleteContact) (idVersionFormlet (c.Id, c.Version)) ]
+                "", fun c -> [ link "Edit" (makeEditContactUrl c.Id) ]
+            ]
+            e.P [ &error ]
+        ]
 
 let showAllGroups cmgr = 
     Group.FindAll() cmgr |> Tx.get |> groupsView
@@ -115,26 +120,24 @@ let showAllContacts cmgr =
     Contact.FindAll() cmgr |> Tx.get |> contactsView
 
 let manageContacts cmgr ctx = 
-    wbview (showAllContacts cmgr) ctx
+    wbview (showAllContacts cmgr "") ctx
 
 let manageContactsAction : RouteConstraint * FAction =
     getPathR AllContacts, manageContacts connMgr
 
-let idVersionFormlet (idVersion: int64 * int64) = pickler idVersion
-let emptyIdVersionFormlet = idVersionFormlet (0L,0L)
-
-let deleteContact cmgr (ctx: ControllerContext) =
-    let contactId = ctx.HttpContext.Request.Params.["id"]
-    let action = 
-        Int32.tryParse contactId
-        |> Option.map (fun i -> 
-                            Contact.DeleteCascade i cmgr |> Tx.get |> ignore
-                            redirectR AllContacts)
-        |> Option.getOrElse (redirectR Error)
-    action ctx
+let deleteContact cmgr =
+    runPost emptyIdVersionFormlet
+    >>= function
+        | Formlet.Success (id,version) -> 
+            match Contact.DeleteCascade id version cmgr with
+            | Tx.Commit (Some _) -> redirectR AllContacts
+            | Tx.Commit None -> redirectR AllContacts // TODO with error
+            | Tx.Rollback a -> redirectR (Error (a.ToString()))
+            | Tx.Failed e -> redirectR (Error (e.ToString()))
+        | Formlet.Failure (_,errors) -> redirectR (Error (sprintf "%A" errors))
 
 let deleteContactAction: RouteConstraint * FAction =
-    postPathR (DeleteContact 0L), deleteContact connMgr
+    postPathR DeleteContact, deleteContact connMgr
 
 let contactFormlet (c: Contact) =
     let idVersion = idVersionFormlet (c.Id, c.Version)
@@ -172,7 +175,7 @@ let editContact cmgr =
     getQueryString "id"
     |> Result.bind 
         (function
-         | None -> redirectR Error
+         | None -> redirectR (Error "Missing contact id")
          | Some contactId -> 
             Int32.tryParse contactId
             |> Option.bind (fun i ->
@@ -183,7 +186,7 @@ let editContact cmgr =
                                 let editFormlet = contactFormlet c |> renderToXml
                                 let view = contactEditOkView editFormlet
                                 wbview view)
-            |> Option.getOrElse (redirectR Error))
+            |> Option.getOrElse (redirectR (Error "")))
 
 type MaybeBuilder() =
     member x.Bind(m,f) = Option.bind f m
@@ -206,7 +209,7 @@ let editContact4 cmgr =
                 return contact
             }
         do! match contact with 
-            | None -> redirectR Error 
+            | None -> redirectR (Error "Contact not found")
             | Some c -> 
                 let editFormlet = contactFormlet c |> renderToXml
                 let view = contactEditOkView editFormlet
@@ -220,26 +223,26 @@ let editContact2 cmgr (ctx: ControllerContext) =
         Int32.tryParse contactId
         |> Option.bind (fun i -> Contact.GetById i cmgr |> Tx.get) // doesn't handle tx fail
         |> Option.map (fun c -> wbview (contactEditOkView (contactFormlet c |> renderToXml)))
-        |> Option.getOrElse (redirectR Error)
+        |> Option.getOrElse (redirectR (Error "Invalid contact id"))
     action ctx
 
 // alternative, no-monad, only pattern matching
 let editContact3 cmgr ctx =
     match getQueryString "id" ctx with
-    | None -> redirectR Error ctx
+    | None -> redirectR (Error "Missing contact id") ctx
     | Some contactId ->
         match Int32.tryParse contactId with
-        | None -> redirectR Error ctx
+        | None -> redirectR (Error "Invalid contact id") ctx
         | Some contactId -> 
             match Contact.GetById contactId cmgr with
             | Tx.Commit contact ->
                 match contact with
-                | None -> redirectR Error ctx
+                | None -> redirectR (Error "Contact not found") ctx
                 | Some contact -> 
                     let editFormlet = contactFormlet contact |> renderToXml
                     let view = contactEditOkView editFormlet
                     wbview view ctx
-            | _ -> redirectR Error ctx
+            | _ -> redirectR (Error "DB Error") ctx
 
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
@@ -252,7 +255,7 @@ let saveContact cmgr =
                 match Contact.Upsert contact cmgr with
                 | Tx.Commit (Some _) -> redirectR AllContacts
                 | Tx.Commit None -> wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
-                | _ -> redirectR Error
+                | _ -> redirectR (Error "DB Error")
             | errorForm, _, None -> wbview (contactEditOkView errorForm)
     }
 
@@ -264,7 +267,7 @@ let saveContact2 cmgr =
             match Contact.Upsert contact cmgr with
             | Tx.Commit (Some _) -> redirectR AllContacts
             | Tx.Commit None -> wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
-            | _ -> redirectR Error
+            | _ -> redirectR (Error "DB Error")
         | errorForm, _, None -> wbview (contactEditOkView errorForm)
 
 let saveContactAction: RouteConstraint * FAction = 

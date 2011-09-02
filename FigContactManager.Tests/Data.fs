@@ -58,7 +58,14 @@ let ``generate versioned update``() =
     Assert.AreEqual("mail", unbox p.["@Email"])
     Assert.AreEqual(0L, unbox p.["@oldversion"])
     Assert.AreEqual(1L, unbox p.["@Version"])
-    ()
+
+[<Test>]
+let ``generate versioned delete``() =
+    let sql,p = generateVersionedDeleteId typeof<Contact> 1 2
+    Assert.AreEqual("delete from Contact where id = @id and version = @version", sql)
+    let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
+    Assert.AreEqual(1, unbox p.["@id"])
+    Assert.AreEqual(2, unbox p.["@version"])
 
 [<Test>]
 let ``generate findall`` () =    

@@ -87,6 +87,24 @@ module Data =
                     name
         sql,[P(name,value)]
 
+    let generateVersionedDeleteId (t: Type) pk version = 
+        let idParam = "@id"
+        let versionParam = "@version"
+        // convention: PK is called 'id'
+        // convention: Version field is called 'version'
+        let sql = sprintf "delete from %s where id = %s and version = %s; select changes()"
+                    (escape t.Name) // convention: type name = table name
+                    idParam
+                    versionParam
+        sql,[P(idParam, pk); P(versionParam, version)]
+
+    let genericVersionedDeleteId (t: Type) pk version = 
+        generateVersionedDeleteId t pk version
+        ||> Tx.execScalar
+        |> Tx.map (function
+                    | None | Some 0L -> None
+                    | Some _ -> Some ())
+
     let generateDelete a =
         // convention: first field is ID
         let value = a |> Sql.recordValues |> Seq.head
