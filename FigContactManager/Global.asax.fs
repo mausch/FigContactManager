@@ -40,9 +40,10 @@ type App() =
 
     member this.Application_Start() = 
         App.InitializeDatabase connectionString |> ignore
-        get "" (content "Hi!")
+        get "" (redirect "contacts")
         get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Result.map Option.getOrDefault))
         let actions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction; newContactAction]
+        let actions = [for r,a in actions -> r, applyFlash a]
         actions |> Seq.iter ((<||) action)
         ()
 

@@ -120,7 +120,8 @@ let showAllContacts cmgr =
     Contact.FindAll() cmgr |> Tx.get |> contactsView
 
 let manageContacts cmgr ctx = 
-    wbview (showAllContacts cmgr "") ctx
+    let viewAllContacts = showAllContacts cmgr >> wbview
+    viewAllContacts =<< getFlash <| ctx // need to delay explicitly
 
 let manageContactsAction : RouteConstraint * FAction =
     getPathR AllContacts, manageContacts connMgr
@@ -131,7 +132,8 @@ let deleteContact cmgr =
         | Formlet.Success (id,version) -> 
             match Contact.DeleteCascade id version cmgr with
             | Tx.Commit (Some _) -> redirectR AllContacts
-            | Tx.Commit None -> redirectR AllContacts // TODO with error
+            | Tx.Commit None -> 
+                setFlash "Contact deleted or modified" >>. redirectR AllContacts
             | Tx.Rollback a -> redirectR (Error (a.ToString()))
             | Tx.Failed e -> redirectR (Error (e.ToString()))
         | Formlet.Failure (_,errors) -> redirectR (Error (sprintf "%A" errors))

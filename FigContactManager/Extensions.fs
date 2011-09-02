@@ -6,10 +6,30 @@ module Result =
     open WingBeats
     open WingBeats.Xml
     open Figment
+    open System.Web.Mvc
 
-    let wbview (n: Node list) : Helpers.FAction =
+    let private flashKey0 = "FigmentFlash0"
+    let private flashKey1 = "FigmentFlash1"
+
+    let wbview (n: Node list) : FAction =
         fun ctx -> Renderer.Render(n, ctx.HttpContext.Response.Output)
 
+    let setFlash (value: string) : FAction = 
+        fun ctx -> ctx.Session.Set flashKey1 value
+
+    let getFlash : ControllerContext -> string =
+        fun ctx -> ctx.Session.Get flashKey0
+
+    let clearFlash : FAction =
+        fun ctx -> ctx.Session.Remove flashKey0
+
+    let applyFlash (a: FAction): FAction =
+        fun ctx ->
+            ctx.Session.Pop flashKey1 |> ctx.Session.Set flashKey0
+            try
+                a ctx
+            finally
+                ctx.Session.Remove flashKey0
 
 [<AutoOpen>]
 module FormletsExtensions =
