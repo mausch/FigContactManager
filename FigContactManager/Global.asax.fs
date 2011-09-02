@@ -41,6 +41,7 @@ type App() =
     member this.Application_Start() = 
         App.InitializeDatabase connectionString |> ignore
         get "" (content "Hi!")
+        get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Result.map Option.getOrDefault))
         let actions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction; newContactAction]
         actions |> Seq.iter ((<||) action)
         ()
