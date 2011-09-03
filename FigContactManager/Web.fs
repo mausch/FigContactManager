@@ -174,19 +174,15 @@ let contactEditOkView = contactEditView ""
 
 let editContact cmgr =
     getQueryString "id"
-    >>= function
-         | None -> redirectR (Error "Missing contact id")
-         | Some contactId -> 
-            Int32.tryParse contactId
-            |> Option.bind (fun i ->
+    |> Result.map (Option.bind Int32.tryParse)
+    |> Result.map (Option.bind (fun i ->
                                 match Contact.GetById i cmgr with
                                 | Tx.Commit c -> c
-                                | _ -> None)
-            |> Option.map (fun c -> 
+                                | _ -> None))
+    |> Result.map (Option.map (fun c -> 
                                 let editFormlet = contactFormlet c |> renderToXml
-                                let view = contactEditOkView editFormlet
-                                wbview view)
-            |> Option.getOrElse (redirectR (Error ""))
+                                contactEditOkView editFormlet))
+    |> Result.bind (function Some v -> wbview v | _ -> redirectR (Error "Contact not found"))
 
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
