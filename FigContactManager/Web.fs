@@ -172,11 +172,9 @@ let contactWriteView title err (n: XNode list)=
 let contactEditView = contactWriteView "Edit contact"
 let contactEditOkView = contactEditView ""
 
-// monadic with named operators
 let editContact cmgr =
     getQueryString "id"
-    |> Result.bind 
-        (function
+    >>= function
          | None -> redirectR (Error "Missing contact id")
          | Some contactId -> 
             Int32.tryParse contactId
@@ -188,7 +186,7 @@ let editContact cmgr =
                                 let editFormlet = contactFormlet c |> renderToXml
                                 let view = contactEditOkView editFormlet
                                 wbview view)
-            |> Option.getOrElse (redirectR (Error "")))
+            |> Option.getOrElse (redirectR (Error ""))
 
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
