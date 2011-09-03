@@ -43,7 +43,7 @@ type App() =
         get "" (redirect "contacts")
         get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Result.map Option.getOrDefault))
         let actions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction; newContactAction]
-        let actions = [for r,a in actions -> r, applyFlash a]
+        let actions = [for r,a in actions -> r, Filters.flash a]
         actions |> Seq.iter ((<||) action)
         ()
 
