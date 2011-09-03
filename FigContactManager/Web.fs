@@ -4,14 +4,14 @@ open System
 open System.Web
 open System.Web.Routing
 open System.Web.Mvc
+open System.Xml.Linq
 open Figment
+open Formlets
 open WingBeats
 open WingBeats.Xml
 open WingBeats.Xhtml
-open global.Formlets
-open FigContactManager.Model
 open WingBeats.Formlets
-open System.Xml.Linq
+open FigContactManager.Model
 
 type WebGetRoute =
     | AllContacts
