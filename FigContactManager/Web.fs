@@ -250,19 +250,6 @@ let editContactAction: RouteConstraint * FAction =
     getPathR (EditContact 0L), editContact connMgr
 
 let saveContact cmgr = 
-    result {
-        let! contactResult = runPost emptyContactFormlet
-        do! match contactResult with
-            | populatedForm, _, Some contact -> 
-                match Contact.Upsert contact cmgr with
-                | Tx.Commit (Some _) -> redirectR AllContacts
-                | Tx.Commit None -> wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
-                | _ -> redirectR (Error "DB Error")
-            | errorForm, _, None -> wbview (contactEditOkView errorForm)
-    }
-
-// alternative using monadic operators
-let saveContact2 cmgr = 
     runPost emptyContactFormlet
     >>= function
         | populatedForm, _, Some contact -> 
