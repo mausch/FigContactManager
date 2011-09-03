@@ -181,8 +181,9 @@ let editContact cmgr =
                                 | _ -> None))
     |> Result.map (Option.map (fun c -> 
                                 let editFormlet = contactFormlet c |> renderToXml
-                                contactEditOkView editFormlet))
-    |> Result.bind (function Some v -> wbview v | _ -> redirectR (Error "Contact not found"))
+                                let view = contactEditOkView editFormlet
+                                wbview view))
+    |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
