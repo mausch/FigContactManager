@@ -264,5 +264,7 @@ let saveContactAction: RouteConstraint * FAction =
 
 let contactNewView = contactWriteView "New contact" ""
 
+let newContact = emptyContactFormlet |> renderToXml |> contactNewView |> wbview
+
 let newContactAction: RouteConstraint * FAction = 
-    getPathR NewContact, emptyContactFormlet |> renderToXml |> contactNewView |> wbview
+    getPathR NewContact, newContact
