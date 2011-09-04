@@ -185,6 +185,29 @@ let editContact cmgr =
                                 wbview view))
     |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
+module OptionResult = 
+    let mreturn a = Some a |> result.Return
+    let bind f m =
+        m |> Result.bind (function
+                          | None -> result.Return None
+                          | Some a -> f a)
+    let map f a = a |> bind (fun b -> mreturn (f b))
+    let bind_map f = Result.map (Option.bind f)
+    let getOrElse_bind a = Result.bind (Option.getOrElse a)
+
+let editContact2 cmgr =
+    getQueryString "id"
+    |> OptionResult.bind_map Int32.tryParse
+    |> OptionResult.bind_map (fun i ->
+                                match Contact.GetById i cmgr with
+                                | Tx.Commit c -> c
+                                | _ -> None)
+    |> OptionResult.map (fun c -> 
+                                let editFormlet = contactFormlet c |> renderToXml
+                                let view = contactEditOkView editFormlet
+                                wbview view)
+    |> OptionResult.getOrElse_bind (redirectR (Error "Contact not found"))
+
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
 
