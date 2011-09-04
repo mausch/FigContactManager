@@ -172,6 +172,12 @@ let contactWriteView title err (n: XNode list)=
 let contactEditView = contactWriteView "Edit contact"
 let contactEditOkView = contactEditView ""
 
+type MaybeBuilder() =
+    member x.Return a = Some a
+    member x.Bind(m,f) = Option.bind f m
+
+let maybe = MaybeBuilder()
+
 let editContact cmgr =
     getQueryString "id"
     |> Result.map (Option.bind Int32.tryParse)
@@ -185,13 +191,22 @@ let editContact cmgr =
                                 wbview view))
     |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
-
-type MaybeBuilder() =
-    member x.Return a = Some a
-    member x.Bind(m,f) = Option.bind f m
-
-let maybe = MaybeBuilder()
-
+let editContact4 cmgr =
+    getQueryString "id"
+    |> Result.map (fun qid ->
+                    maybe {
+                        let! rawContactId = qid
+                        let! contactId = Int32.tryParse rawContactId
+                        let! contact = 
+                            match Contact.GetById contactId cmgr with
+                            | Tx.Commit c -> c
+                            | _ -> None
+                        let editForm = contactFormlet contact |> renderToXml
+                        let view = contactEditOkView editForm
+                        return wbview view
+                    })
+    |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
+                        
 let editContact3 cmgr = 
     result {
         let! qid = getQueryString "id"
