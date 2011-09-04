@@ -180,8 +180,8 @@ let editContact cmgr =
                                 | Tx.Commit c -> c
                                 | _ -> None))
     |> Result.map (Option.map (fun c -> 
-                                let editFormlet = contactFormlet c |> renderToXml
-                                let view = contactEditOkView editFormlet
+                                let editForm = contactFormlet c |> renderToXml
+                                let view = contactEditOkView editForm
                                 wbview view))
     |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
@@ -203,8 +203,8 @@ let editContact3 cmgr =
                     match Contact.GetById contactId cmgr with
                     | Tx.Commit c -> c
                     | _ -> None
-                let editFormlet = contactFormlet contact |> renderToXml
-                let view = contactEditOkView editFormlet
+                let editForm = contactFormlet contact |> renderToXml
+                let view = contactEditOkView editForm
                 return wbview view
             }
         return! match viewAction with
