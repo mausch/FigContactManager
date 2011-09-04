@@ -212,6 +212,26 @@ let editContact3 cmgr =
                 | _ -> redirectR (Error "Contact not found")
     }
 
+let editContact2 cmgr ctx =
+    let qid = getQueryString "id" ctx
+    let viewAction = 
+        maybe {
+            let! rawContactId = qid
+            let! contactId = Int32.tryParse rawContactId
+            let! contact = 
+                match Contact.GetById contactId cmgr with
+                | Tx.Commit c -> c
+                | _ -> None
+            let editForm = contactFormlet contact |> renderToXml
+            let view = contactEditOkView editForm
+            return wbview view
+        }
+    let action =
+        match viewAction with
+        | Some a -> a
+        | None -> redirectR (Error "Contact not found")
+    action ctx
+
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
 
