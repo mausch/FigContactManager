@@ -185,28 +185,32 @@ let editContact cmgr =
                                 wbview view))
     |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
-module OptionResult = 
-    let mreturn a = Some a |> result.Return
-    let bind f m =
-        m |> Result.bind (function
-                          | None -> result.Return None
-                          | Some a -> f a)
-    let map f a = a |> bind (fun b -> mreturn (f b))
-    let bind_map f = Result.map (Option.bind f)
-    let getOrElse_bind a = Result.bind (Option.getOrElse a)
 
-let editContact2 cmgr =
-    getQueryString "id"
-    |> OptionResult.bind_map Int32.tryParse
-    |> OptionResult.bind_map (fun i ->
-                                match Contact.GetById i cmgr with
-                                | Tx.Commit c -> c
-                                | _ -> None)
-    |> OptionResult.map (fun c -> 
-                                let editFormlet = contactFormlet c |> renderToXml
-                                let view = contactEditOkView editFormlet
-                                wbview view)
-    |> OptionResult.getOrElse_bind (redirectR (Error "Contact not found"))
+type MaybeBuilder() =
+    member x.Return a = Some a
+    member x.Bind(m,f) = Option.bind f m
+
+let maybe = MaybeBuilder()
+
+let editContact3 cmgr = 
+    result {
+        let! qid = getQueryString "id"
+        let viewAction = 
+            maybe {
+                let! rawContactId = qid
+                let! contactId = Int32.tryParse rawContactId
+                let! contact = 
+                    match Contact.GetById contactId cmgr with
+                    | Tx.Commit c -> c
+                    | _ -> None
+                let editFormlet = contactFormlet contact |> renderToXml
+                let view = contactEditOkView editFormlet
+                return wbview view
+            }
+        return! match viewAction with
+                | Some a -> a
+                | _ -> redirectR (Error "Contact not found")
+    }
 
 let editContactAction: RouteConstraint * FAction = 
     getPathR (EditContact 0L), editContact connMgr
