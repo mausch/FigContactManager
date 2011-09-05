@@ -185,8 +185,8 @@ let editContact cmgr =
                                 wbview view))
     |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
-let editContactAction: RouteConstraint * FAction = 
-    getPathR (EditContact 0L), editContact connMgr
+let editContactAction : RouteConstraint * FAction = 
+    getPathR (EditContact 0L), noCache >>. editContact connMgr
 
 let saveContact cmgr = 
     runPost emptyContactFormlet
