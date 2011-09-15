@@ -9,6 +9,8 @@ open FigContactManager.ModelValidation
 open FigContactManager.Validation
 open FigContactManager.Web
 open Figment
+open FSharpx
+open FSharpx.Reader
 
 type App() =
     inherit HttpApplication()
@@ -41,7 +43,7 @@ type App() =
     member this.Application_Start() = 
         App.InitializeDatabase connectionString |> ignore
         get "" (redirect "contacts")
-        get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Result.map Option.getOrDefault))
+        get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Reader.map Option.getOrDefault))
         let actions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction; newContactAction]
         let actions = [for r,a in actions -> r, Filters.flash a]
         actions |> Seq.iter ((<||) action)

@@ -6,6 +6,8 @@ open System.Web.Routing
 open System.Web.Mvc
 open System.Xml.Linq
 open Figment
+open FSharpx
+open FSharpx.Reader
 open Formlets
 open WingBeats
 open WingBeats.Xml
@@ -147,7 +149,7 @@ let contactFormlet (c: Contact) =
     let phoneOrEmail = 
         let phoneInput = f.Tel(c.Phone) |> f.WithLabel "Phone:"
         let emailInput = f.Email(c.Email) |> f.WithLabel "Email:"
-        let phoneOrEmail = yields t2 <*> phoneInput <*> emailInput
+        let phoneOrEmail = yields tuple2 <*> phoneInput <*> emailInput
         let nonEmpty = String.IsNullOrWhiteSpace >> not
         let oneNonEmpty (a,b) = nonEmpty a || nonEmpty b
         phoneOrEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
@@ -174,16 +176,16 @@ let contactEditOkView = contactEditView ""
 
 let editContact cmgr =
     getQueryString "id"
-    |> Result.map (Option.bind Int32.tryParse)
-    |> Result.map (Option.bind (fun i ->
+    |> Reader.map (Option.bind Int32.tryParse)
+    |> Reader.map (Option.bind (fun i ->
                                 match Contact.GetById i cmgr with
                                 | Tx.Commit c -> c
                                 | _ -> None))
-    |> Result.map (Option.map (fun c -> 
+    |> Reader.map (Option.map (fun c -> 
                                 let editForm = contactFormlet c |> renderToXml
                                 let view = contactEditOkView editForm
                                 wbview view))
-    |> Result.bind (Option.getOrElse (redirectR (Error "Contact not found")))
+    |> Reader.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
 let editContactAction : RouteConstraint * FAction = 
     getPathR (EditContact 0L), noCache >>. editContact connMgr
