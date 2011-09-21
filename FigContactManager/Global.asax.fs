@@ -13,6 +13,7 @@ open FSharpx.Reader
 
 type App() =
     inherit HttpApplication()
+    let connectionString = System.Configuration.ConfigurationManager.ConnectionStrings.["sqlite"].ConnectionString
 
     static member AddSampleData conn =
         let tx = Tx.TransactionBuilder()
@@ -40,10 +41,15 @@ type App() =
         
 
     member this.Application_Start() = 
-        App.InitializeDatabase connectionString |> ignore
+
         get "" (redirect "contacts")
         get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Reader.map Option.getOrDefault))
-        let actions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction; newContactAction]
+
+        let connMgr = App.InitializeDatabase connectionString
+
+        let dbActions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction]
+        let stdActions = [newContactAction]
+        let actions = [for r,a in dbActions -> r, a connMgr] @ stdActions
         let actions = [for r,a in actions -> r, Filters.flash a]
         actions |> Seq.iter ((<||) action)
         ()

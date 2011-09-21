@@ -115,8 +115,10 @@ let showAllGroups cmgr =
 let manageGroups cmgr ctx =
     wbview (showAllGroups cmgr) ctx
 
-let manageGroupsAction : RouteConstraint * FAction =
-    getPathR AllGroups, manageGroups connMgr
+type RouteAndAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
+
+let manageGroupsAction : RouteAndAction =
+    getPathR AllGroups, manageGroups
 
 let showAllContacts cmgr = 
     Contact.FindAll() cmgr |> Tx.get |> contactsView
@@ -125,8 +127,8 @@ let manageContacts cmgr ctx =
     let viewAllContacts = showAllContacts cmgr >> wbview
     viewAllContacts =<< getFlash <| ctx // need to delay explicitly
 
-let manageContactsAction : RouteConstraint * FAction =
-    getPathR AllContacts, manageContacts connMgr
+let manageContactsAction : RouteAndAction = 
+    getPathR AllContacts, manageContacts
 
 let deleteContact cmgr =
     runPost emptyIdVersionFormlet
@@ -140,8 +142,8 @@ let deleteContact cmgr =
             | Tx.Failed e -> redirectR (Error (e.ToString()))
         | Formlet.Failure (_,errors) -> redirectR (Error (sprintf "%A" errors))
 
-let deleteContactAction: RouteConstraint * FAction =
-    postPathR DeleteContact, deleteContact connMgr
+let deleteContactAction : RouteAndAction =
+    postPathR DeleteContact, deleteContact
 
 let contactFormlet (c: Contact) =
     let idVersion = idVersionFormlet (c.Id, c.Version)
@@ -187,8 +189,8 @@ let editContact cmgr =
                                 wbview view))
     |> Reader.bind (Option.getOrElse (redirectR (Error "Contact not found")))
 
-let editContactAction : RouteConstraint * FAction = 
-    getPathR (EditContact 0L), noCache >>. editContact connMgr
+let editContactAction : RouteAndAction =
+    getPathR (EditContact 0L), fun c -> noCache >>. editContact c
 
 let saveContact cmgr = 
     runPost emptyContactFormlet
@@ -200,12 +202,12 @@ let saveContact cmgr =
             | _ -> redirectR (Error "DB Error")
         | errorForm, _, None -> wbview (contactEditOkView errorForm)
 
-let saveContactAction: RouteConstraint * FAction = 
-    postPathR SaveContact, saveContact connMgr
+let saveContactAction : RouteAndAction =
+    postPathR SaveContact, saveContact
 
 let contactNewView = contactWriteView "New contact" ""
 
-let newContact = emptyContactFormlet |> renderToXml |> contactNewView |> wbview
+let newContact : FAction = emptyContactFormlet |> renderToXml |> contactNewView |> wbview
 
-let newContactAction: RouteConstraint * FAction = 
+let newContactAction : RouteConstraint * FAction =
     getPathR NewContact, newContact

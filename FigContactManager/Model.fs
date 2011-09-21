@@ -77,6 +77,5 @@ module Model =
             ContactGroup.DeleteByGroup c >>. Group.Delete c
         static member FindAll(?limitOffset) = genericFindAll<Group> limitOffset
 
-    let connectionString = System.Configuration.ConfigurationManager.ConnectionStrings.["sqlite"].ConnectionString
-    let connMgr = Sql.withNewConnection (fun () -> createConnection connectionString)
+    //let connMgr = Sql.withNewConnection (fun () -> createConnection connectionString)
     
