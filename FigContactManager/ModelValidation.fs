@@ -3,11 +3,8 @@
 open System
 open System.Text.RegularExpressions
 open FigContactManager.Model
-open FigContactManager.Validation
-
-let inline private (<*>) f x = apv f x
-let inline private (<!>) f x = Choice1Of2 f <*> x
-let inline private (>>=) f x = bind f x
+open FSharpx.Choice
+open FSharpx.Validation
 
 let nonEmpty msg x =
     if String.IsNullOrWhiteSpace x

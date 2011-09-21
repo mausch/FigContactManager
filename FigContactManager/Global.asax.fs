@@ -6,7 +6,6 @@ open System.Web.Mvc
 open FigContactManager.Data
 open FigContactManager.Model
 open FigContactManager.ModelValidation
-open FigContactManager.Validation
 open FigContactManager.Web
 open Figment
 open FSharpx
@@ -19,13 +18,13 @@ type App() =
         let tx = Tx.TransactionBuilder()
         let t =
             tx {
-                let! john = Contact.TryNew "John" "555-1234" "john@example.com" |> getOrFail |> Contact.Insert
-                let! jennifer = Contact.TryNew "Jennifer" "554-9988" "jennifer@example.com" |> getOrFail |> Contact.Insert
-                let! friends = Group.TryNew "Friends" |> getOrFail |> Group.Insert
-                let! work = Group.TryNew "Work" |> getOrFail |> Group.Insert
-                do! ContactGroup.TryNew friends.Id john.Id |> getOrFail |> ContactGroup.Insert |> Tx.map ignore
-                do! ContactGroup.TryNew work.Id john.Id |> getOrFail |> ContactGroup.Insert |> Tx.map ignore
-                do! ContactGroup.TryNew friends.Id jennifer.Id |> getOrFail |> ContactGroup.Insert |> Tx.map ignore
+                let! john = Contact.TryNew "John" "555-1234" "john@example.com" |> Choice.get |> Contact.Insert
+                let! jennifer = Contact.TryNew "Jennifer" "554-9988" "jennifer@example.com" |> Choice.get |> Contact.Insert
+                let! friends = Group.TryNew "Friends" |> Choice.get |> Group.Insert
+                let! work = Group.TryNew "Work" |> Choice.get |> Group.Insert
+                do! ContactGroup.TryNew friends.Id john.Id |> Choice.get |> ContactGroup.Insert |> Tx.map ignore
+                do! ContactGroup.TryNew work.Id john.Id |> Choice.get |> ContactGroup.Insert |> Tx.map ignore
+                do! ContactGroup.TryNew friends.Id jennifer.Id |> Choice.get |> ContactGroup.Insert |> Tx.map ignore
                 return ()
             }
         let t = Tx.required t // run in a transaction

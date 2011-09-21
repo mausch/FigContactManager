@@ -176,7 +176,7 @@ let contactEditOkView = contactEditView ""
 
 let editContact cmgr =
     getQueryString "id"
-    |> Reader.map (Option.bind Int32.tryParse)
+    |> Reader.map (Option.bind Int32.parse)
     |> Reader.map (Option.bind (fun i ->
                                 match Contact.GetById i cmgr with
                                 | Tx.Commit c -> c

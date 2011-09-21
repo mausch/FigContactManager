@@ -50,18 +50,8 @@ module FormletsExtensions =
         let env = EnvDict.fromNV ctx.Request.Params
         run formlet env
 
-module Option = 
-    let getOrElse v =
-        function
-        | Some x -> x
-        | _ -> v
-
 type String =
     static member prepend prefix (s: string) =
         prefix + s
     static member split (sep: char) (s: string) =
         s.Split [|sep|]
-
-module Array =
-    let nth i a = 
-        Array.get a i
