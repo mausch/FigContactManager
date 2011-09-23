@@ -120,12 +120,12 @@ type RouteAndAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
 let manageGroupsAction : RouteAndAction =
     getPathR AllGroups, manageGroups
 
-let showAllContacts cmgr = 
-    Contact.FindAll() cmgr |> Tx.get |> contactsView
-
-let manageContacts cmgr ctx = 
-    let viewAllContacts = showAllContacts cmgr >> wbview
-    viewAllContacts =<< getFlash <| ctx // need to delay explicitly
+let manageContacts = 
+    let view = Contact.FindAll() >> Tx.get >> contactsView
+//    fun cmgr ->
+//        getFlash >>= (view cmgr >> wbview)
+    fun cmgr ->
+        getFlash >>= fun err -> view cmgr err |> wbview
 
 let manageContactsAction : RouteAndAction = 
     getPathR AllContacts, manageContacts
