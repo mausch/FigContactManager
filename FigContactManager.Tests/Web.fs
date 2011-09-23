@@ -19,7 +19,7 @@ let ``show all groups`` () =
 
 [<Test>]
 let ``contact formlet with empty phone and email gives error``() =
-    let env = EnvDict.fromStrings [losSerializer.Serialize 1L; "John"; ""; ""]
+    let env = EnvDict.fromStrings [losSerializer.Serialize (1L,1L); "John"; ""; ""]
     printfn "%A" env
     match run emptyContactFormlet env with
     | Success c -> failwithf "formlet should not have succeeded: %A" c
