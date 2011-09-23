@@ -82,7 +82,7 @@ let tx = Tx.TransactionBuilder()
 let ``create contact``() =
     use conn = createConnection()
     let mgr = Sql.withConnection conn
-    createSchema conn [typeof<Contact>]
+    createSchema mgr [typeof<Contact>]
     let insert =
         tx {
             let! i = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
@@ -101,7 +101,7 @@ let ``create contact``() =
 let ``create group`` () =
     use conn = createConnection()
     let mgr = Sql.withConnection conn
-    createSchema conn [typeof<Group>]
+    createSchema mgr [typeof<Group>]
     let newGroup = Group.Insert { Id = 0L; Name = "Business" } |> Tx.map ignore
     newGroup mgr |> Tx.get |> ignore
 
@@ -109,7 +109,7 @@ let ``create group`` () =
 let ``delete group cascade`` () =
     use conn = createConnection()
     let mgr = Sql.withConnection conn
-    createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
+    createSchema mgr [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
     let transaction = 
         tx {
             let! john = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
@@ -126,7 +126,7 @@ let ``delete group cascade`` () =
 let ``find all groups`` () =
     use conn = createConnection()
     let mgr = Sql.withConnection conn
-    createSchema conn [typeof<Group>]
+    createSchema mgr [typeof<Group>]
     let transaction =
         tx {
             let! business = Group.Insert { Id = 0L; Name = "Business" }

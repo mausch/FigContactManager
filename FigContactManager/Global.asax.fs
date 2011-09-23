@@ -31,27 +31,23 @@ type App() =
         let t = Tx.required t // run in a transaction
         t conn |> Tx.get |> ignore
 
-    static member InitializeDatabase connectionString =
+    static member InitializeDatabase (connMgr: Sql.ConnectionManager) =
         printfn "Initializing database..."
-        use conn = createConnection connectionString
-        createSchema conn [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
-        let connMgr = Sql.withConnection conn
-        App.AddSampleData connMgr
-        connMgr
-        
+        createSchema connMgr [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
+        App.AddSampleData connMgr       
 
     member this.Application_Start() = 
-
+        let connMgr = Sql.withNewConnection (fun () -> Data.createConnection connectionString)
         get "" (redirect "contacts")
         get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Reader.map Option.getOrDefault))
 
-        let connMgr = App.InitializeDatabase connectionString
+        App.InitializeDatabase connMgr
 
         let dbActions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction]
         let stdActions = [newContactAction]
         let actions = [for r,a in dbActions -> r, a connMgr] @ stdActions
         let actions = [for r,a in actions -> r, Filters.flash a]
-        actions |> Seq.iter ((<||) action)
+        for r,a in actions do action r a
         ()
 
     member this.Application_End() =

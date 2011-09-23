@@ -23,7 +23,7 @@ module Data =
             else s
 
     let createSchema conn types =
-        let exec a = Sql.execNonQuery (Sql.withConnection conn) a [] |> ignore
+        let exec a = Sql.execNonQuery conn a [] |> ignore
         let sqlType t =
             match t with
             | x when x = typeof<int> -> "int"

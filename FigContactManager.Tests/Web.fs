@@ -12,7 +12,9 @@ open WingBeats.Xml
 
 [<Test>]
 let ``show all groups`` () =
-    let cmgr = App.InitializeDatabase connectionString
+    use conn = createConnection()
+    let cmgr = Sql.withConnection conn
+    App.InitializeDatabase cmgr
     let html = showAllGroups cmgr |> Renderer.RenderToString
     printfn "%s" html
     ()
