@@ -8,11 +8,11 @@ module Result =
     open Figment
     open System.Web.Mvc
 
-    let internal flashKey0 = "FigmentFlash0"
-    let internal flashKey1 = "FigmentFlash1"
-
     let wbview (n: Node list) : FAction =
         fun ctx -> Renderer.Render(n, ctx.HttpContext.Response.Output)
+
+    let internal flashKey0 = "FigmentFlash0"
+    let internal flashKey1 = "FigmentFlash1"
 
     let setFlash (value: string) : FAction = 
         fun ctx -> ctx.Session.Set flashKey1 value
