@@ -16,14 +16,16 @@ let ``generate insert`` () =
     let sql,p = generateInsert (Contact.New "John" "555-1234" "john@example.com")
     let p = Seq.toList p
     printfn "%s" sql
-    Assert.AreEqual("insert into Contact (Id,Name,Phone,Email) values (null, @Name,@Phone,@Email); select last_insert_rowid();", sql)
-    Assert.AreEqual(3, p.Length)
-    Assert.AreEqual("@Name", p.[0].ParameterName)
-    Assert.AreEqual("@Phone", p.[1].ParameterName)
-    Assert.AreEqual("@Email", p.[2].ParameterName)
-    Assert.AreEqual("John", string p.[0].Value)
-    Assert.AreEqual("555-1234", string p.[1].Value)
-    Assert.AreEqual("john@example.com", string p.[2].Value)
+    Assert.AreEqual("insert into Contact (Id,Version,Name,Phone,Email) values (null, @Version,@Name,@Phone,@Email); select last_insert_rowid();", sql)
+    Assert.AreEqual(4, p.Length)
+    Assert.AreEqual("@Version", p.[0].ParameterName)
+    Assert.AreEqual("@Name", p.[1].ParameterName)
+    Assert.AreEqual("@Phone", p.[2].ParameterName)
+    Assert.AreEqual("@Email", p.[3].ParameterName)
+    Assert.AreEqual(0L, unbox p.[0].Value)
+    Assert.AreEqual("John", string p.[1].Value)
+    Assert.AreEqual("555-1234", string p.[2].Value)
+    Assert.AreEqual("john@example.com", string p.[3].Value)
 
 [<Test>]
 let ``generate delete`` () =
@@ -40,8 +42,8 @@ let ``generate update`` () =
     let sql,p = generateUpdate (Contact.NewWithId 2L "nn" "pp" "ee")
     let p = p |> Seq.map (fun p -> p.ParameterName, p.Value) |> dict
     printfn "%s" sql
-    Assert.AreEqual("update Contact set Name=@Name,Phone=@Phone,Email=@Email where id = @id", sql)
-    Assert.AreEqual(4, p.Count)
+    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id", sql)
+    Assert.AreEqual(5, p.Count)
     Assert.AreEqual(2L, unbox p.["@id"])
     Assert.AreEqual("nn", unbox p.["@Name"])
     Assert.AreEqual("pp", unbox p.["@Phone"])
@@ -51,7 +53,7 @@ let ``generate update`` () =
 let ``generate versioned update``() =
     let sql,p = generateVersionedUpdate (Contact.New "name" "phone" "mail")
     printfn "%s" sql
-    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id and version = @oldversion", sql)
+    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id and version = @oldversion; select changes()", sql)
     printfn "%A" p
     let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
     Assert.AreEqual("name", unbox p.["@Name"])
@@ -63,7 +65,7 @@ let ``generate versioned update``() =
 [<Test>]
 let ``generate versioned delete``() =
     let sql,p = generateVersionedDeleteId typeof<Contact> 1 2
-    Assert.AreEqual("delete from Contact where id = @id and version = @version", sql)
+    Assert.AreEqual("delete from Contact where id = @id and version = @version; select changes()", sql)
     let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
     Assert.AreEqual(1, unbox p.["@id"])
     Assert.AreEqual(2, unbox p.["@version"])
