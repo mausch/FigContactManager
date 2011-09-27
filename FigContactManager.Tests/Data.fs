@@ -53,7 +53,7 @@ let ``generate update`` () =
 let ``generate versioned update``() =
     let sql,p = generateVersionedUpdate (Contact.New "name" "phone" "mail")
     printfn "%s" sql
-    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id and version = @oldversion; select changes()", sql)
+    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id and version = @oldversion; select changes();", sql)
     printfn "%A" p
     let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
     Assert.AreEqual("name", unbox p.["@Name"])
@@ -65,7 +65,7 @@ let ``generate versioned update``() =
 [<Test>]
 let ``generate versioned delete``() =
     let sql,p = generateVersionedDeleteId typeof<Contact> 1 2
-    Assert.AreEqual("delete from Contact where id = @id and version = @version; select changes()", sql)
+    Assert.AreEqual("delete from Contact where id = @id and version = @version; select changes();", sql)
     let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
     Assert.AreEqual(1, unbox p.["@id"])
     Assert.AreEqual(2, unbox p.["@version"])

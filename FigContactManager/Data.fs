@@ -63,6 +63,7 @@ module Data =
     let P = Sql.Parameter.make
 
     let private selectLastId = "select last_insert_rowid();"
+    let private selectChanges = "select changes();"
 
     let generateInsert a =
         let allfields = a.GetType() |> Sql.recordFields
@@ -89,10 +90,11 @@ module Data =
         let versionParam = "@version"
         // convention: PK is called 'id'
         // convention: Version field is called 'version'
-        let sql = sprintf "delete from %s where id = %s and version = %s; select changes()"
+        let sql = sprintf "delete from %s where id = %s and version = %s; %s"
                     (escape t.Name) // convention: type name = table name
                     idParam
                     versionParam
+                    selectChanges
         sql,[P(idParam, pk); P(versionParam, version)]
 
     let genericVersionedDeleteId (t: Type) pk version = 
@@ -147,11 +149,12 @@ module Data =
             |> String.concat ","
         // convention: PK is called 'id'
         // convention: concurrency version field is called 'version'
-        let sql = sprintf "update %s set %s where id = %s and version = %s; select changes()"
+        let sql = sprintf "update %s set %s where id = %s and version = %s; %s"
                     (escape <| a.GetType().Name) // convention: type name = table name
                     fieldsAndParams 
                     idField
                     versionField
+                    selectChanges
         let values = recordValues |> Seq.skip 2 |> Seq.toList
         let values = (box newVersion)::values
         let names = allFieldsButId |> Seq.map (sprintf "@%s")
