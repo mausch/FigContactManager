@@ -17,7 +17,6 @@ let ``show all groups`` () =
     App.InitializeDatabase cmgr
     let html = showAllGroups cmgr |> Renderer.RenderToString
     printfn "%s" html
-    ()
 
 [<Test>]
 let ``contact formlet with empty phone and email gives error``() =
@@ -28,4 +27,3 @@ let ``contact formlet with empty phone and email gives error``() =
     | Failure (_,errors) -> 
         Assert.AreEqual(1, errors.Length)
         Assert.AreEqual("Enter either a phone or an email", errors.[0])
-    ()

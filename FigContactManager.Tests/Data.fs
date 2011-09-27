@@ -116,8 +116,7 @@ let ``delete group cascade`` () =
             let! business = Group.Insert { Id = 0L; Name = "Business" }
             let! john_business = ContactGroup.Insert { Id = 0L; Group = business.Id; Contact = john.Id }
             do! Group.DeleteCascade business
-            let! count = Tx.execScalar "select count(*) from ContactGroup" []
-            let count = Option.get count
+            let! count = Tx.execScalar "select count(*) from ContactGroup" [] |> Tx.map Option.get
             Assert.AreEqual(0L, count)
         }
     transaction mgr |> Tx.get |> ignore
@@ -136,4 +135,3 @@ let ``find all groups`` () =
             return ()
         }
     transaction mgr |> Tx.get |> ignore
-    ()
