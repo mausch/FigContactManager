@@ -5,8 +5,10 @@ open System.Collections.Generic
 open System.Data
 open Microsoft.FSharp.Reflection
 open FigContactManager.Data
+open Tx.Operators
 
 module Model =
+
     type Contact = {
         Id: int64
         Version: int64

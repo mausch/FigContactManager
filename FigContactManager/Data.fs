@@ -62,9 +62,6 @@ module Data =
 
     let P = Sql.Parameter.make
 
-    let inline (>>=) f x = Tx.bind x f
-    let inline (>>.) x f = Tx.bind (fun _ -> x) f
-
     let private selectLastId = "select last_insert_rowid();"
 
     let generateInsert a =
