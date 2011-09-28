@@ -43,7 +43,9 @@
     <Compile Include="Data.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="ModelValidation.fs" />
-    <Compile Include="Web.fs" />
+    <Compile Include="Web.Routes.fs" />
+    <Compile Include="Web.Views.fs" />
+    <Compile Include="Web.Actions.fs" />
     <Compile Include="Global.asax.fs" />
     <Compile Include="Program.fs" />
     <None Include="Web.config" />
