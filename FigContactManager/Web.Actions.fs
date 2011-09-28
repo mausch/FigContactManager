@@ -8,8 +8,8 @@ open FSharpx.Reader
 open Figment
 open FigContactManager
 open FigContactManager.Model
-open Views
-open Routes
+open FigContactManager.Web.Views
+open FigContactManager.Web.Routes
 open Formlets
 
 let manage findAll view =
