@@ -6,7 +6,7 @@ open FigContactManager
 open FigContactManager.Data
 open FigContactManager.Model
 open FigContactManager.Data.Tests
-open FigContactManager.Web
+open FigContactManager.Web.Views
 open WingBeats
 open WingBeats.Xml
 

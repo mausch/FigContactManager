@@ -6,7 +6,7 @@ open System.Web.Mvc
 open FigContactManager.Data
 open FigContactManager.Model
 open FigContactManager.ModelValidation
-open FigContactManager.Web
+open FigContactManager.Web.Actions
 open Figment
 open FSharpx
 open FSharpx.Reader
