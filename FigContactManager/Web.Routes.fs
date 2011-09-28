@@ -1,50 +1,47 @@
-﻿namespace FigContactManager.Web
+﻿module FigContactManager.Web.Routes
 
 open System
+open FSharpx
+open FigContactManager
+open Figment
 
-module Routes =
+type WebGetRoute =
+    | AllContacts
+    | NewContact
+    | EditContact of int64
+    | EditGroup of int64
+    | AllGroups
+    | Error of string
 
-    open FSharpx
-    open FigContactManager
-    open Figment
+type WebPostRoute =
+    | DeleteContact
+    | SaveContact
+    | SaveGroup
 
-    type WebGetRoute =
-        | AllContacts
-        | NewContact
-        | EditContact of int64
-        | EditGroup of int64
-        | AllGroups
-        | Error of string
+let mapWebGetRoute =
+    function
+    | AllContacts -> "contacts"
+    | NewContact -> "contacts/new"
+    | EditContact i -> sprintf "contacts/edit?id=%d" i
+    | EditGroup i -> sprintf "groups/edit?id=%d" i
+    | AllGroups -> "groups"
+    | Error e -> "error?e=" + urlencode e
 
-    type WebPostRoute =
-        | DeleteContact
-        | SaveContact
-        | SaveGroup
+let makeEditContactUrl i = EditContact i |> mapWebGetRoute |> String.prepend "/"
+let makeEditGroupUrl i = EditGroup i |> mapWebGetRoute |> String.prepend "/"
 
-    let mapWebGetRoute =
-        function
-        | AllContacts -> "contacts"
-        | NewContact -> "contacts/new"
-        | EditContact i -> sprintf "contacts/edit?id=%d" i
-        | EditGroup i -> sprintf "groups/edit?id=%d" i
-        | AllGroups -> "groups"
-        | Error e -> "error?e=" + urlencode e
+let mapWebPostRoute =
+    function
+    | DeleteContact -> "contacts/delete"
+    | SaveContact -> "contacts/save"
+    | SaveGroup -> "groups/save"
 
-    let makeEditContactUrl i = EditContact i |> mapWebGetRoute |> String.prepend "/"
-    let makeEditGroupUrl i = EditGroup i |> mapWebGetRoute |> String.prepend "/"
+let saveContactUrl = mapWebPostRoute SaveContact |> String.prepend "/"
+let saveGroupUrl = mapWebPostRoute SaveGroup |> String.prepend "/"
 
-    let mapWebPostRoute =
-        function
-        | DeleteContact -> "contacts/delete"
-        | SaveContact -> "contacts/save"
-        | SaveGroup -> "groups/save"
+let getPath p = ifInsensitivePathIs p &&. ifMethodIsGet
+let postPath p = ifInsensitivePathIs p &&. ifMethodIsPost
 
-    let saveContactUrl = mapWebPostRoute SaveContact |> String.prepend "/"
-    let saveGroupUrl = mapWebPostRoute SaveGroup |> String.prepend "/"
-
-    let getPath p = ifInsensitivePathIs p &&. ifMethodIsGet
-    let postPath p = ifInsensitivePathIs p &&. ifMethodIsPost
-
-    let getPathR x = mapWebGetRoute x |> String.split '?' |> Array.nth 0 |> getPath
-    let postPathR x = mapWebPostRoute x |> postPath
-    let redirectR x = mapWebGetRoute x |> String.prepend "/" |> redirect
+let getPathR x = mapWebGetRoute x |> String.split '?' |> Array.nth 0 |> getPath
+let postPathR x = mapWebPostRoute x |> postPath
+let redirectR x = mapWebGetRoute x |> String.prepend "/" |> redirect
