@@ -27,15 +27,18 @@ module Model =
         Id: int64
         Name: string
     }
-    with static member New name =
+    with 
+        static member New name =
             { Id = 0L; Name = name }
+        static member Dummy = Group.New ""
 
     type ContactGroup = {
         Id: int64
         Group: int64
         Contact: int64
     }
-    with static member New group contact =
+    with 
+        static member New group contact =
             { Id = 0L; Group = group; Contact = contact }
 
 
@@ -74,10 +77,20 @@ module Model =
         static member Insert (c: Group) =
             genericInsert c
             |> Tx.map (fun newId -> { c with Id = newId })
+        static member Update (c: Group) =
+            genericUpdate c
+        static member Upsert (c: Group) = 
+            if c.Id = Group.Dummy.Id
+                then Group.Insert c |> Tx.map Some
+                else Group.Update c
         static member private Delete (c: Group) = genericDelete c
         static member DeleteCascade (c: Group) =
             ContactGroup.DeleteByGroup c >>. Group.Delete c
         static member FindAll(?limitOffset) = genericFindAll<Group> limitOffset
+        static member GetById i =
+            generateGetById typeof<Group> i
+            ||> Tx.execReader
+            |> Tx.map (Sql.mapFirst (Sql.asRecord<Group> ""))
 
     //let connMgr = Sql.withNewConnection (fun () -> createConnection connectionString)
     

@@ -122,10 +122,11 @@ module Data =
             |> Seq.map (fun f -> sprintf "%s=@%s" (escape f) f)
             |> Seq.toList
             |> String.concat ","
-        let sql = sprintf "update %s set %s where id = %s" // convention: PK is called 'id'
+        let sql = sprintf "update %s set %s where id = %s; %s" // convention: PK is called 'id'
                     (escape <| a.GetType().Name) // convention: type name = table name
                     fieldsAndParams 
                     idField
+                    selectChanges
         let values = a |> Sql.recordValues |> Seq.skip 1
         let names = allFieldsButId |> Seq.map (sprintf "@%s")
         let parameters = Seq.zip names values |> Sql.parameters |> Seq.toList
@@ -164,7 +165,11 @@ module Data =
         sql,parameters
 
     let genericUpdate c = 
-        generateUpdate c ||> Tx.execNonQueryi
+        generateUpdate c 
+        ||> Tx.execScalar
+        |> Tx.map (function
+                    | None | Some 0L -> None
+                    | Some _ -> Some c)
 
     let genericVersionedUpdate (incrVersion: 'a -> 'a) c = 
         generateVersionedUpdate c 

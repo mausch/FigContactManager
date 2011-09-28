@@ -19,29 +19,35 @@ type WebGetRoute =
     | AllContacts
     | NewContact
     | EditContact of int64
+    | EditGroup of int64
     | AllGroups
     | Error of string
 
 type WebPostRoute =
     | DeleteContact
     | SaveContact
+    | SaveGroup
 
 let mapWebGetRoute =
     function
     | AllContacts -> "contacts"
     | NewContact -> "contacts/new"
     | EditContact i -> sprintf "contacts/edit?id=%d" i
+    | EditGroup i -> sprintf "groups/edit?id=%d" i
     | AllGroups -> "groups"
     | Error e -> "error?e=" + urlencode e
 
 let makeEditContactUrl i = EditContact i |> mapWebGetRoute |> String.prepend "/"
+let makeEditGroupUrl i = EditGroup i |> mapWebGetRoute |> String.prepend "/"
 
 let mapWebPostRoute =
     function
     | DeleteContact -> "contacts/delete"
     | SaveContact -> "contacts/save"
+    | SaveGroup -> "groups/save"
 
 let saveContactUrl = mapWebPostRoute SaveContact |> String.prepend "/"
+let saveGroupUrl = mapWebPostRoute SaveGroup |> String.prepend "/"
 
 let getPath p = ifInsensitivePathIs p &&. ifMethodIsGet
 let postPath p = ifInsensitivePathIs p &&. ifMethodIsPost
@@ -89,9 +95,16 @@ let postFormlet text url formlet =
 
 let link text url = e.A ["href", url] [ &text ]
 
-let groupsView (groups: Group seq) = 
+let groupsView (groups: Group seq) error = 
     layout "Manage contact groups"
-        [makeTable groups ["Group name", fun c -> [ &c.Name ]]]
+        [
+            makeTable groups [
+                "Group name", fun c -> [ &c.Name ]
+                //"", fun c -> [ postFormlet "Delete" (mapWebPostRoute DeleteContact) (idVersionFormlet (c.Id, c.Version)) ]
+                "", fun c -> [ link "Edit" (makeEditGroupUrl c.Id) ]
+            ]
+            e.P [ &error ]
+        ]
 
 let idVersionFormlet (idVersion: int64 * int64) = pickler idVersion
 let emptyIdVersionFormlet = idVersionFormlet (0L,0L)
@@ -109,23 +122,19 @@ let contactsView (contacts: Contact seq) error =
             e.P [ &error ]
         ]
 
-let showAllGroups cmgr = 
-    Group.FindAll() cmgr |> Tx.get |> groupsView
+let manage findAll view =
+    let view = findAll() >> Tx.get >> view
+    fun cmgr ->
+        getFlash >>= fun err -> view cmgr err |> wbview
 
-let manageGroups cmgr ctx =
-    wbview (showAllGroups cmgr) ctx
+let manageGroups = manage Group.FindAll groupsView
 
 type RouteAndAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
 
 let manageGroupsAction : RouteAndAction =
     getPathR AllGroups, manageGroups
 
-let manageContacts = 
-    let view = Contact.FindAll() >> Tx.get >> contactsView
-//    fun cmgr ->
-//        getFlash >>= (view cmgr >> wbview)
-    fun cmgr ->
-        getFlash >>= fun err -> view cmgr err |> wbview
+let manageContacts = manage Contact.FindAll contactsView
 
 let manageContactsAction : RouteAndAction = 
     getPathR AllContacts, manageContacts
@@ -161,49 +170,80 @@ let contactFormlet (c: Contact) =
     <*> nameInput
     <*> phoneOrEmail
 
+let groupFormlet (c: Group) =
+    let nameInput = f.Text(c.Name, required = true) |> f.WithLabel "Name"
+
+    yields (fun i n -> { Group.Id = i; Name = n })
+    <*> pickler c.Id
+    <*> nameInput
+
+let emptyGroupFormlet = groupFormlet Group.Dummy
 let emptyContactFormlet = contactFormlet Contact.Dummy
 
-let contactWriteView title err (n: XNode list)=
+let saveView url title err (n: XNode list) =
     layout title
         [
-            s.FormPost saveContactUrl [
+            s.FormPost url [
                 yield!!+ n
                 yield e.P [ submit "Save" ]
                 yield e.P [ &err ]
             ]
         ]
 
+let contactWriteView = saveView saveContactUrl
 let contactEditView = contactWriteView "Edit contact"
 let contactEditOkView = contactEditView ""
 
-let editContact cmgr =
-    getQueryString "id"
-    |> Reader.map (Option.bind Int32.parse)
+let groupWriteView = saveView saveGroupUrl
+let groupEditView = groupWriteView "Edit group"
+let groupEditOkView = groupEditView ""
+
+let getIdFromQueryString : ControllerContext -> int option =     
+    getQueryString "id" |> Reader.map (Option.bind Int32.parse)
+
+let edit name getById editFormlet view cmgr = 
+    getIdFromQueryString
     |> Reader.map (Option.bind (fun i ->
-                                match Contact.GetById i cmgr with
+                                match getById i cmgr with
                                 | Tx.Commit c -> c
                                 | _ -> None))
     |> Reader.map (Option.map (fun c -> 
-                                let editForm = contactFormlet c |> renderToXml
-                                let view = contactEditOkView editForm
+                                let editForm = editFormlet c |> renderToXml
+                                let view = view editForm
                                 wbview view))
-    |> Reader.bind (Option.getOrElse (redirectR (Error "Contact not found")))
+    |> Reader.bind (Option.getOrElse (redirectR (Error (sprintf "%s not found" name))))
 
-let editContactAction : RouteAndAction =
-    getPathR (EditContact 0L), fun c -> noCache >>. editContact c
 
-let saveContact cmgr = 
-    runPost emptyContactFormlet
+let editGroup x = edit "Group" Group.GetById groupFormlet groupEditOkView x
+let editContact x = edit "Contact" Contact.GetById contactFormlet contactEditOkView x
+
+let editAction route action =
+    getPathR (route 0L), fun c -> noCache >>. action c
+
+let editContactAction : RouteAndAction = editAction EditContact editContact
+let editGroupAction : RouteAndAction = editAction EditGroup editGroup
+
+let save name formlet upsert allRoute editView editOkView cmgr = 
+    runPost formlet
     >>= function
-        | populatedForm, _, Some contact -> 
-            match Contact.Upsert contact cmgr with
-            | Tx.Commit (Some _) -> redirectR AllContacts
-            | Tx.Commit None -> wbview (contactEditView "Contact deleted or modified, please go back and reload" populatedForm)
+        | populatedForm, _, Some entity -> 
+            match upsert entity cmgr with
+            | Tx.Commit (Some _) -> redirectR allRoute
+            | Tx.Commit None -> 
+                let msg = sprintf "%s deleted or modified, please go back and reload" name
+                wbview (editView msg populatedForm)
             | _ -> redirectR (Error "DB Error")
-        | errorForm, _, None -> wbview (contactEditOkView errorForm)
+        | errorForm, _, None -> wbview (editOkView errorForm)
+
+let saveContact = save "Contact" emptyContactFormlet Contact.Upsert AllContacts contactEditView contactEditOkView
+
+let saveGroup = save "Group" emptyGroupFormlet Group.Upsert AllGroups groupEditView groupEditOkView
 
 let saveContactAction : RouteAndAction =
     postPathR SaveContact, saveContact
+
+let saveGroupAction : RouteAndAction = 
+    postPathR SaveGroup, saveGroup
 
 let contactNewView = contactWriteView "New contact" ""
 

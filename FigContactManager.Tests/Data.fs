@@ -42,7 +42,7 @@ let ``generate update`` () =
     let sql,p = generateUpdate (Contact.NewWithId 2L "nn" "pp" "ee")
     let p = p |> Seq.map (fun p -> p.ParameterName, p.Value) |> dict
     printfn "%s" sql
-    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id", sql)
+    Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id; select changes();", sql)
     Assert.AreEqual(5, p.Count)
     Assert.AreEqual(2L, unbox p.["@id"])
     Assert.AreEqual("nn", unbox p.["@Name"])
