@@ -3,13 +3,8 @@
 [<AutoOpen>]
 module Result =
 
-    open System
-    open System.Web
-    open System.Web.Mvc
-    open WingBeats
     open WingBeats.Xml
     open Figment
-    open FSharpx
 
     let wbview (n: Node list) : FAction =
         fun ctx -> Renderer.Render(n, ctx.HttpContext.Response.Output)
