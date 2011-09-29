@@ -56,7 +56,7 @@ let groupsView (groups: Group seq) error =
             makeTable groups [
                 "Group name", fun c -> [ &c.Name ]
                 //"", fun c -> [ postFormlet "Delete" (mapWebPostRoute DeleteContact) (idVersionFormlet (c.Id, c.Version)) ]
-                "", fun c -> [ link "Edit" (makeEditGroupUrl c.Id) ]
+                "", fun c -> [ link "Edit" (mapWebGetRoute (EditGroup c.Id)) ]
             ]
             e.P [ &error ]
         ]
@@ -72,7 +72,7 @@ let contactsView (contacts: Contact seq) error =
                 "Email", fun c -> [ &c.Email ]
                 "Phone", fun c -> [ &c.Phone ]
                 "", fun c -> [ postFormlet "Delete" (mapWebPostRoute DeleteContact) (idVersionFormlet (c.Id, c.Version)) ]
-                "", fun c -> [ link "Edit" (makeEditContactUrl c.Id) ]
+                "", fun c -> [ link "Edit" (mapWebGetRoute (EditContact c.Id)) ]
             ]
             e.P [ &error ]
         ]
@@ -113,11 +113,11 @@ let saveView url title err (n: XNode list) =
 let emptyGroupFormlet = groupFormlet Group.Dummy
 let emptyContactFormlet = contactFormlet Contact.Dummy
 
-let contactWriteView = saveView saveContactUrl
+let contactWriteView = saveView (mapWebPostRoute SaveContact)
 let contactEditView = contactWriteView "Edit contact"
 let contactEditOkView = contactEditView ""
 
-let groupWriteView = saveView saveGroupUrl
+let groupWriteView = saveView (mapWebPostRoute SaveGroup)
 let groupEditView = groupWriteView "Edit group"
 let groupEditOkView = groupEditView ""
 
