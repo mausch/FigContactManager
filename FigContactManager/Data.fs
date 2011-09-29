@@ -110,17 +110,17 @@ let generateDelete a =
     let value = a |> Sql.recordValues |> Seq.head
     generateDeleteId (a.GetType()) value
 
-let execScalarAndMap f sql =
+let execScalarAndMap v sql =
     sql
     ||> Tx.execScalar
     |> Tx.map (function
                 | None | Some 0L -> None
-                | Some _ -> Some (f()))
+                | Some _ -> Some v)
     
 
 let genericDelete c =
     generateDelete c 
-    |> execScalarAndMap (konst ())
+    |> execScalarAndMap ()
 
 let generateUpdate a =
     // convention: first field is ID
@@ -176,11 +176,11 @@ let generateVersionedUpdate a =
 
 let genericUpdate c = 
     generateUpdate c 
-    |> execScalarAndMap (konst ())
+    |> execScalarAndMap ()
 
 let genericVersionedUpdate (incrVersion: 'a -> 'a) c = 
     generateVersionedUpdate c 
-    |> execScalarAndMap (konst (incrVersion c))
+    |> execScalarAndMap (incrVersion c)
 
 let genericInsert c =
     generateInsert c 
