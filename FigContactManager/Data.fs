@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 open System.Data
+open FSharpx
 open Microsoft.FSharp.Reflection
 
 let createConnection (connectionString: string) =
@@ -79,9 +80,10 @@ let generateInsert a =
 
 let generateDeleteId (t: Type) value = 
     let name = "@i"
-    let sql = sprintf "delete from %s where id = %s" // convention: PK is called 'id'
+    let sql = sprintf "delete from %s where id = %s; %s" // convention: PK is called 'id'
                 (escape t.Name) // convention: type name = table name
                 name
+                selectChanges
     sql,[P(name,value)]
 
 let generateVersionedDeleteId (t: Type) pk version = 
@@ -108,8 +110,17 @@ let generateDelete a =
     let value = a |> Sql.recordValues |> Seq.head
     generateDeleteId (a.GetType()) value
 
+let execScalarAndMap f sql =
+    sql
+    ||> Tx.execScalar
+    |> Tx.map (function
+                | None | Some 0L -> None
+                | Some _ -> Some (f()))
+    
+
 let genericDelete c =
-    generateDelete c ||> Tx.execNonQueryi
+    generateDelete c 
+    |> execScalarAndMap (konst ())
 
 let generateUpdate a =
     // convention: first field is ID
@@ -165,17 +176,11 @@ let generateVersionedUpdate a =
 
 let genericUpdate c = 
     generateUpdate c 
-    ||> Tx.execScalar
-    |> Tx.map (function
-                | None | Some 0L -> None
-                | Some _ -> Some c)
+    |> execScalarAndMap (konst ())
 
 let genericVersionedUpdate (incrVersion: 'a -> 'a) c = 
     generateVersionedUpdate c 
-    ||> Tx.execScalar
-    |> Tx.map (function
-                | None | Some 0L -> None
-                | Some _ -> Some (incrVersion c))
+    |> execScalarAndMap (konst (incrVersion c))
 
 let genericInsert c =
     generateInsert c 

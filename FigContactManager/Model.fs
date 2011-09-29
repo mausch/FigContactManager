@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 open System.Data
+open FSharpx
 open Microsoft.FSharp.Reflection
 open FigContactManager.Data
 open Tx.Operators
@@ -64,7 +65,7 @@ type Contact with
         genericVersionedDeleteId typeof<Contact> i version
     static member DeleteCascade (c: int64) (version: int64) =
         ContactGroup.DeleteByContactId c 
-        |> Tx.combine (Contact.DeleteById c version)
+        >>. Contact.DeleteById c version
     static member GetById i =
         generateGetById typeof<Contact> i
         ||> Tx.execReader
@@ -80,7 +81,7 @@ type Group with
     static member Upsert (c: Group) = 
         if c.Id = Group.Dummy.Id
             then Group.Insert c |> Tx.map Some
-            else Group.Update c
+            else Group.Update c |> Tx.map (konst (Some c))
     static member private Delete (c: Group) = genericDelete c
     static member DeleteCascade (c: Group) =
         ContactGroup.DeleteByGroup c >>. Group.Delete c

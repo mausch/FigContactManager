@@ -32,7 +32,7 @@ let ``generate delete`` () =
     let sql,p = generateDelete (Contact.NewWithId 2L "" "" "")
     let p = Seq.toList p
     printfn "%s" sql
-    Assert.AreEqual("delete from Contact where id = @i", sql)
+    Assert.AreEqual("delete from Contact where id = @i; select changes();", sql)
     Assert.AreEqual(1, p.Length)
     Assert.AreEqual("@i", p.[0].ParameterName)
     Assert.AreEqual(2L, unbox p.[0].Value)
