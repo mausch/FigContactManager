@@ -29,6 +29,9 @@ let manageContacts = manage Contact.FindAll contactsView
 let manageContactsAction : RouteAndAction = 
     getPathR AllContacts, manageContacts
 
+let error a = 
+    redirectR (Error (sprintf "%A" a))
+
 let deleteContact cmgr =
     runPost emptyIdVersionFormlet
     >>= function
@@ -37,9 +40,9 @@ let deleteContact cmgr =
             | Tx.Commit (Some _) -> redirectR AllContacts
             | Tx.Commit None -> 
                 setFlash "Contact previously deleted or modified" >>. redirectR AllContacts
-            | Tx.Rollback a -> redirectR (Error (a.ToString()))
-            | Tx.Failed e -> redirectR (Error (e.ToString()))
-        | Formlet.Failure (_, errors) -> redirectR (Error (sprintf "%A" errors))
+            | Tx.Rollback a -> error a
+            | Tx.Failed e -> error e
+        | Formlet.Failure (_, errors) -> error errors
 
 let deleteContactAction : RouteAndAction =
     postPathR DeleteContact, deleteContact
@@ -52,9 +55,9 @@ let deleteGroup cmgr =
             | Tx.Commit (Some _) -> redirectR AllGroups
             | Tx.Commit None ->
                 setFlash "Group previously deleted or modified" >>. redirectR AllGroups
-            | Tx.Rollback a -> redirectR (Error (a.ToString()))
-            | Tx.Failed e -> redirectR (Error (e.ToString()))
-        | Formlet.Failure (_, errors) -> redirectR (Error (sprintf "%A" errors))
+            | Tx.Rollback a -> error a
+            | Tx.Failed e -> error e
+        | Formlet.Failure (_, errors) -> error errors
 
 let deleteGroupAction: RouteAndAction = 
     postPathR DeleteGroup, deleteGroup
@@ -72,7 +75,7 @@ let edit name getById editFormlet view cmgr =
                                 let editForm = editFormlet c |> renderToXml
                                 let view = view editForm
                                 wbview view))
-    |> Reader.bind (Option.getOrElse (redirectR (Error (sprintf "%s not found" name))))
+    |> Reader.bind (Option.getOrElse (error (sprintf "%s not found" name)))
 
 
 let editGroup x = edit "Group" Group.GetById groupFormlet groupEditOkView x
@@ -93,7 +96,7 @@ let save name formlet upsert allRoute editView editOkView cmgr =
             | Tx.Commit None -> 
                 let msg = sprintf "%s deleted or modified, please go back and reload" name
                 wbview (editView msg populatedForm)
-            | _ -> redirectR (Error "DB Error")
+            | _ -> error "DB Error"
         | errorForm, _, None -> wbview (editOkView errorForm)
 
 let saveContact = save "Contact" emptyContactFormlet Contact.Upsert AllContacts contactEditView contactEditOkView
