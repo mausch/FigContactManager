@@ -36,13 +36,28 @@ let deleteContact cmgr =
             match Contact.DeleteCascade id version cmgr with
             | Tx.Commit (Some _) -> redirectR AllContacts
             | Tx.Commit None -> 
-                setFlash "Contact deleted or modified" >>. redirectR AllContacts
+                setFlash "Contact previously deleted or modified" >>. redirectR AllContacts
             | Tx.Rollback a -> redirectR (Error (a.ToString()))
             | Tx.Failed e -> redirectR (Error (e.ToString()))
-        | Formlet.Failure (_,errors) -> redirectR (Error (sprintf "%A" errors))
+        | Formlet.Failure (_, errors) -> redirectR (Error (sprintf "%A" errors))
 
 let deleteContactAction : RouteAndAction =
     postPathR DeleteContact, deleteContact
+
+let deleteGroup cmgr = 
+    runPost (pickler 0L)
+    >>= function
+        | Formlet.Success id ->
+            match Group.DeleteCascade id cmgr with
+            | Tx.Commit (Some _) -> redirectR AllGroups
+            | Tx.Commit None ->
+                setFlash "Group previously deleted or modified" >>. redirectR AllGroups
+            | Tx.Rollback a -> redirectR (Error (a.ToString()))
+            | Tx.Failed e -> redirectR (Error (e.ToString()))
+        | Formlet.Failure (_, errors) -> redirectR (Error (sprintf "%A" errors))
+
+let deleteGroupAction: RouteAndAction = 
+    postPathR DeleteGroup, deleteGroup
 
 let getIdFromQueryString : ControllerContext -> int option =     
     getQueryString "id" |> Reader.map (Option.bind Int32.parse)

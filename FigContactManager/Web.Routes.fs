@@ -15,6 +15,7 @@ type WebGetRoute =
 
 type WebPostRoute =
     | DeleteContact
+    | DeleteGroup
     | SaveContact
     | SaveGroup
 

@@ -122,6 +122,10 @@ let genericDelete c =
     generateDelete c 
     |> execScalarAndMap ()
 
+let genericDeleteId t pk = 
+    generateDeleteId t pk
+    |> execScalarAndMap ()
+
 let generateUpdate a =
     // convention: first field is ID
     let idValue = a |> Sql.recordValues |> Seq.head

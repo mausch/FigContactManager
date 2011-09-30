@@ -115,7 +115,7 @@ let ``delete group cascade`` () =
             let! john = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
             let! business = Group.Insert { Id = 0L; Name = "Business" }
             let! john_business = ContactGroup.Insert { Id = 0L; Group = business.Id; Contact = john.Id }
-            let! _ = Group.DeleteCascade business
+            let! _ = Group.DeleteCascade business.Id
             let! count = Tx.execScalar "select count(*) from ContactGroup" []
             Assert.AreEqual(0L, Option.get count)
         }

@@ -46,8 +46,8 @@ type ContactGroup with
         genericInsert c
         |> Tx.map (fun newId -> { c with Id = newId })
     static member Delete (c: ContactGroup) = genericDelete c
-    static member DeleteByGroup (c: Group) =
-        Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c.Id)]
+    static member DeleteByGroup (c: int64) =
+        Tx.execNonQueryi "delete from ContactGroup where \"group\" = @g" [P("@g",c)]
     static member DeleteByContactId (cid: int64) =
         Tx.execNonQueryi "delete from ContactGroup where \"contact\" = @g" [P("@g",cid)]
 
@@ -82,8 +82,8 @@ type Group with
         if c.Id = Group.Dummy.Id
             then Group.Insert c |> Tx.map Some
             else Group.Update c |> Tx.map (konst (Some c))
-    static member private Delete (c: Group) = genericDelete c
-    static member DeleteCascade (c: Group) =
+    static member private Delete (c: int64) = genericDeleteId typeof<Group> c
+    static member DeleteCascade (c: int64) =
         ContactGroup.DeleteByGroup c >>. Group.Delete c
     static member FindAll(?limitOffset) = genericFindAll<Group> limitOffset
     static member GetById i =

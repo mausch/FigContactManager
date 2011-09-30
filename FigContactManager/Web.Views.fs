@@ -55,7 +55,7 @@ let groupsView (groups: Group seq) error =
         [
             makeTable groups [
                 "Group name", fun c -> [ &c.Name ]
-                //"", fun c -> [ postFormlet "Delete" (mapWebPostRoute DeleteContact) (idVersionFormlet (c.Id, c.Version)) ]
+                "", fun c -> [ postFormlet "Delete" (mapWebPostRoute DeleteGroup) (pickler c.Id) ]
                 "", fun c -> [ link "Edit" (mapWebGetRoute (EditGroup c.Id)) ]
             ]
             e.P [ &error ]
