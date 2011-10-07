@@ -12,19 +12,21 @@ open FigContactManager.Web.Views
 open FigContactManager.Web.Routes
 open Formlets
 
+type RouteAndAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
+
+get "/" (redirect "contacts")
+get "/error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Reader.map Option.getOrDefault))
+
 let manage findAll view =
     let view = findAll() >> Tx.get >> view
     fun cmgr ->
         getFlash >>= fun err -> view cmgr err |> wbview
 
 let manageGroups = manage Group.FindAll groupsView
-
-type RouteAndAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
+let manageContacts = manage Contact.FindAll contactsView
 
 let manageGroupsAction : RouteAndAction =
     getPathR AllGroups, manageGroups
-
-let manageContacts = manage Contact.FindAll contactsView
 
 let manageContactsAction : RouteAndAction = 
     getPathR AllContacts, manageContacts
@@ -100,7 +102,6 @@ let save name formlet upsert allRoute editView editOkView cmgr =
         | errorForm, _, None -> wbview (editOkView errorForm)
 
 let saveContact = save "Contact" emptyContactFormlet Contact.Upsert AllContacts contactEditView contactEditOkView
-
 let saveGroup = save "Group" emptyGroupFormlet Group.Upsert AllGroups groupEditView groupEditOkView
 
 let saveContactAction : RouteAndAction =

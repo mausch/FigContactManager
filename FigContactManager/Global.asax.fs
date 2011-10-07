@@ -38,8 +38,6 @@ type App() =
 
     member this.Application_Start() = 
         let connMgr = Sql.withNewConnection (fun () -> Data.createConnection connectionString)
-        get "" (redirect "contacts")
-        get "error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Reader.map Option.getOrDefault))
 
         App.InitializeDatabase connMgr
 
