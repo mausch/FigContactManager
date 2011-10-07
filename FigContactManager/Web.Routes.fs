@@ -31,6 +31,7 @@ let mapWebGetRoute =
 let mapWebPostRoute =
     function
     | DeleteContact -> "/contacts/delete"
+    | DeleteGroup -> "/groups/delete"
     | SaveContact -> "/contacts/save"
     | SaveGroup -> "/groups/save"
 
