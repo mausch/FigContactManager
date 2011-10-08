@@ -38,6 +38,8 @@ let mapWebPostRoute =
 let getPath p = ifInsensitivePathIs p &&. ifMethodIsGet
 let postPath p = ifInsensitivePathIs p &&. ifMethodIsPost
 
-let getPathR x = mapWebGetRoute x |> String.split '?' |> Array.nth 0 |> getPath
+let baseUrl = String.split '?' >> Array.nth 0
+
+let getPathR x = mapWebGetRoute x |> baseUrl |> getPath
 let postPathR x = mapWebPostRoute x |> postPath
 let redirectR x = mapWebGetRoute x |> redirect

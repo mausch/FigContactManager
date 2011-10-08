@@ -14,8 +14,10 @@ open Formlets
 
 type RouteAndAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
 
-get "/" (redirect "contacts")
-get "/error" (contentf "<pre>%s</pre>" =<< (getQueryString "e" |> Reader.map Option.getOrDefault))
+get "/" (redirectR AllContacts)
+let errorUrl = Error "" |> mapWebGetRoute |> baseUrl
+get errorUrl (fun ctx -> contentf "<pre>%s</pre>" ctx.QueryString.["e"] ctx)
+
 
 let manage findAll view =
     let view = findAll() >> Tx.get >> view
