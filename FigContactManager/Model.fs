@@ -63,7 +63,7 @@ type Contact with
             else Contact.Update c
     static member private DeleteById i version =
         genericVersionedDeleteId typeof<Contact> i version
-    static member DeleteCascade (c: int64) (version: int64) =
+    static member DeleteCascade (c: int64, version: int64) =
         ContactGroup.DeleteByContactId c 
         >>. Contact.DeleteById c version
     static member GetById i =

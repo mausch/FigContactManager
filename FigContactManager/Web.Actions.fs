@@ -36,32 +36,24 @@ let manageContactsAction : RouteAndAction =
 let error a = 
     redirectR (Error (sprintf "%A" a))
 
-let deleteContact cmgr =
-    runPost emptyIdVersionFormlet
+let delete name allRoute deleteEntity formlet cmgr = 
+    runPost formlet
     >>= function
-        | Formlet.Success (id,version) -> 
-            match Contact.DeleteCascade id version cmgr with
-            | Tx.Commit (Some _) -> redirectR AllContacts
+        | Formlet.Success x -> 
+            match deleteEntity x cmgr with
+            | Tx.Commit (Some _) -> redirectR allRoute
             | Tx.Commit None -> 
-                setFlash "Contact previously deleted or modified" >>. redirectR AllContacts
+                sprintf "%s previously deleted or modified" name |> setFlash >>. redirectR allRoute
             | Tx.Rollback a -> error a
             | Tx.Failed e -> error e
         | Formlet.Failure (_, errors) -> error errors
+
+let deleteContact = delete "Contact" AllContacts Contact.DeleteCascade emptyIdVersionFormlet
 
 let deleteContactAction : RouteAndAction =
     postPathR DeleteContact, deleteContact
 
-let deleteGroup cmgr = 
-    runPost (pickler 0L)
-    >>= function
-        | Formlet.Success id ->
-            match Group.DeleteCascade id cmgr with
-            | Tx.Commit (Some _) -> redirectR AllGroups
-            | Tx.Commit None ->
-                setFlash "Group previously deleted or modified" >>. redirectR AllGroups
-            | Tx.Rollback a -> error a
-            | Tx.Failed e -> error e
-        | Formlet.Failure (_, errors) -> error errors
+let deleteGroup = delete "Group" AllGroups Group.DeleteCascade (pickler 0L)
 
 let deleteGroupAction: RouteAndAction = 
     postPathR DeleteGroup, deleteGroup
