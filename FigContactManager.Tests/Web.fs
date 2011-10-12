@@ -21,7 +21,7 @@ open System.Web.Routing
 let ``contact formlet with empty phone and email gives error``() =
     let env = EnvDict.fromStrings [losSerializer.Serialize (1L,1L); "John"; ""; ""]
     printfn "%A" env
-    match run emptyContactFormlet env with
+    match run contactViews.EmptyEditFormlet env with
     | Success c -> failwithf "formlet should not have succeeded: %A" c
     | Failure (_,errors) -> 
         Assert.AreEqual(1, errors.Length)
@@ -44,6 +44,6 @@ let ``delete contact with inexisting contact``() =
                 override x.Redirect(url, _) = redirectTo := url 
                 override x.SetCookie c = cookie := c }
         |> buildCtx
-    deleteContact mgr ctx
+    (snd contactActions'.Delete) mgr ctx
     Assert.AreEqual("/contacts", !redirectTo)
     Assert.Contains(base64decode (!cookie).Value, "deleted or modified")

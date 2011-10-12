@@ -9,8 +9,9 @@ type WebGetRoute =
     | AllContacts
     | NewContact
     | EditContact of int64
-    | EditGroup of int64
     | AllGroups
+    | NewGroup
+    | EditGroup of int64
     | Error of string
 
 type WebPostRoute =
@@ -19,13 +20,38 @@ type WebPostRoute =
     | SaveContact
     | SaveGroup
 
+type CRUDRoutes = {
+    New: WebGetRoute
+    Edit: int64 -> WebGetRoute
+    All: WebGetRoute
+    Save: WebPostRoute
+    Delete: WebPostRoute
+}
+
+let groupRoutes = {
+    New = NewGroup
+    Edit = EditGroup
+    All = AllGroups
+    Save = SaveGroup
+    Delete = DeleteGroup
+}
+
+let contactRoutes = {
+    New = NewContact
+    Edit = EditContact
+    All = AllContacts
+    Save = SaveContact
+    Delete = DeleteContact
+}
+
 let mapWebGetRoute =
     function
     | AllContacts -> "/contacts"
     | NewContact -> "/contacts/new"
     | EditContact i -> sprintf "/contacts/edit?id=%d" i
-    | EditGroup i -> sprintf "/groups/edit?id=%d" i
     | AllGroups -> "/groups"
+    | NewGroup -> "/groups/new"
+    | EditGroup i -> sprintf "/groups/edit?id=%d" i
     | Error e -> "/error?e=" + urlencode e
 
 let mapWebPostRoute =

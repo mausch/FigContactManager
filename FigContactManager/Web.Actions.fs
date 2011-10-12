@@ -12,26 +12,17 @@ open FigContactManager.Web.Views
 open FigContactManager.Web.Routes
 open Formlets
 
-type RouteAndAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
+type RouteAndDbAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
+type RouteAndAction = RouteConstraint * FAction
 
 get "/" (redirectR AllContacts)
 let errorUrl = Error "" |> mapWebGetRoute |> baseUrl
 get errorUrl (fun ctx -> contentf "<pre>%s</pre>" ctx.QueryString.["e"] ctx)
 
-
 let manage findAll view =
     let view = findAll() >> Tx.get >> view
     fun cmgr ->
         getFlash >>= fun err -> view cmgr err |> wbview
-
-let manageGroups = manage Group.FindAll groupsView
-let manageContacts = manage Contact.FindAll contactsView
-
-let manageGroupsAction : RouteAndAction =
-    getPathR AllGroups, manageGroups
-
-let manageContactsAction : RouteAndAction = 
-    getPathR AllContacts, manageContacts
 
 let error a = 
     redirectR (Error (sprintf "%A" a))
@@ -48,16 +39,6 @@ let delete name allRoute deleteEntity formlet cmgr =
             | Tx.Failed e -> error e
         | Formlet.Failure (_, errors) -> error errors
 
-let deleteContact = delete "Contact" AllContacts Contact.DeleteCascade emptyIdVersionFormlet
-
-let deleteContactAction : RouteAndAction =
-    postPathR DeleteContact, deleteContact
-
-let deleteGroup = delete "Group" AllGroups Group.DeleteCascade (pickler 0L)
-
-let deleteGroupAction: RouteAndAction = 
-    postPathR DeleteGroup, deleteGroup
-
 let getIdFromQueryString : ControllerContext -> int option =     
     getQueryString "id" |> Reader.map (Option.bind Int32.parse)
 
@@ -73,16 +54,6 @@ let edit name getById editFormlet view cmgr =
                                 wbview view))
     |> Reader.bind (Option.getOrElse (error (sprintf "%s not found" name)))
 
-
-let editGroup x = edit "Group" Group.GetById groupFormlet groupEditOkView x
-let editContact x = edit "Contact" Contact.GetById contactFormlet contactEditOkView x
-
-let editAction route action =
-    getPathR (route 0L), fun c -> noCache >>. action c
-
-let editContactAction : RouteAndAction = editAction EditContact editContact
-let editGroupAction : RouteAndAction = editAction EditGroup editGroup
-
 let save name formlet upsert allRoute editView editOkView cmgr = 
     runPost formlet
     >>= function
@@ -95,18 +66,64 @@ let save name formlet upsert allRoute editView editOkView cmgr =
             | _ -> error "DB Error"
         | errorForm, _, None -> wbview (editOkView errorForm)
 
-let saveContact = save "Contact" emptyContactFormlet Contact.Upsert AllContacts contactEditView contactEditOkView
-let saveGroup = save "Group" emptyGroupFormlet Group.Upsert AllGroups groupEditView groupEditOkView
+[<AbstractClass>]
+type AbstractCRUDActions<'a, 'b>(views: 'a CRUDViews, routes: CRUDRoutes) =
+    abstract member FindAll: (unit -> Sql.ConnectionManager -> Tx.TxResult<'a seq, _>)
+    abstract member GetById: (_ -> Sql.ConnectionManager -> Tx.TxResult<'a option, _>)
+    abstract member DeleteEntity: ('b -> Sql.ConnectionManager -> Tx.TxResult<unit option, _>)
+    abstract member Upsert: ('a -> Sql.ConnectionManager -> Tx.TxResult<'a option, _>)
+    abstract member DeleteFormlet: 'b Formlet
+    member x.Manage = 
+        let action = manage x.FindAll views.ShowView
+        getPathR routes.All, action
+    member x.Delete = 
+        let action = delete views.Name routes.All x.DeleteEntity x.DeleteFormlet
+        postPathR routes.Delete, action
+    member x.Edit = 
+        let action = edit views.Name x.GetById views.EditFormlet views.EditOkView
+        getPathR (routes.Edit 0L), fun c -> noCache >>. action c
+    member x.Save = 
+        let action = save views.Name views.EmptyEditFormlet x.Upsert routes.All views.EditView views.EditOkView
+        postPathR routes.Save, action
+    member x.New = 
+        let action = views.EmptyEditFormlet |> renderToXml |> views.NewView |> wbview
+        getPathR routes.New, action
 
-let saveContactAction : RouteAndAction =
-    postPathR SaveContact, saveContact
+let contactActions' = 
+    { new AbstractCRUDActions<_,_>(contactViews, contactRoutes) with
+        override x.FindAll = Contact.FindAll
+        override x.GetById = Contact.GetById
+        override x.DeleteEntity = Contact.DeleteCascade
+        override x.Upsert = Contact.Upsert
+        override x.DeleteFormlet = emptyIdVersionFormlet }
+    
+let groupActions' = 
+    { new AbstractCRUDActions<_,_>(groupViews, groupRoutes) with
+        override x.FindAll = Group.FindAll
+        override x.GetById = Group.GetById
+        override x.DeleteEntity = Group.DeleteCascade
+        override x.Upsert = Group.Upsert
+        override x.DeleteFormlet = pickler 0L }
 
-let saveGroupAction : RouteAndAction = 
-    postPathR SaveGroup, saveGroup
+type CRUDActions = {
+    Manage: RouteAndAction
+    Delete: RouteAndAction
+    Edit: RouteAndAction
+    Save: RouteAndAction
+    New: RouteAndAction
+}
 
-let contactNewView = contactWriteView "New contact" ""
+let abstractToConcreteCRUDActions (a: AbstractCRUDActions<_,_>) cmgr =
+    { Manage = fst a.Manage, snd a.Manage <| cmgr
+      Delete = fst a.Delete, snd a.Delete <| cmgr
+      Edit = fst a.Edit, snd a.Edit <| cmgr
+      Save = fst a.Save, snd a.Save <| cmgr
+      New = a.New }
 
-let newContact : FAction = emptyContactFormlet |> renderToXml |> contactNewView |> wbview
+let crudActionsToList (a: CRUDActions) = 
+    [a.Manage; a.Delete; a.Edit; a.Save; a.New]
 
-let newContactAction : RouteConstraint * FAction =
-    getPathR NewContact, newContact
+let abstractCRUDToActionList a b = abstractToConcreteCRUDActions a b |> crudActionsToList
+
+let contactActions = abstractCRUDToActionList contactActions'
+let groupActions = abstractCRUDToActionList groupActions'

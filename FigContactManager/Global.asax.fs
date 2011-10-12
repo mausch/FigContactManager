@@ -41,9 +41,7 @@ type App() =
 
         App.InitializeDatabase connMgr
 
-        let dbActions = [manageGroupsAction; manageContactsAction; deleteContactAction; editContactAction; saveContactAction; editGroupAction; saveGroupAction; deleteGroupAction]
-        let stdActions = [newContactAction]
-        let actions = [for r,a in dbActions -> r, a connMgr] @ stdActions
+        let actions = [groupActions; contactActions] |> List.collect ((|>) connMgr)
         let actions = [for r,a in actions -> r, Filters.flash a]
         for r,a in actions do action r a
         ()

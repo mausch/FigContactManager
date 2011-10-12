@@ -110,14 +110,26 @@ let saveView url title err (n: XNode list) =
             ]
         ]
 
-let emptyGroupFormlet = groupFormlet Group.Dummy
-let emptyContactFormlet = contactFormlet Contact.Dummy
+[<AbstractClass>]
+type 'a CRUDViews(routes: CRUDRoutes) =
+    abstract member Dummy: 'a
+    abstract member EditFormlet: ('a -> 'a Formlet)
+    abstract member ShowView: ('a seq -> string -> Node list)
+    member x.Name = typeof<'a>.Name
+    member x.EmptyEditFormlet = x.EditFormlet x.Dummy
+    member x.WriteView = saveView (mapWebPostRoute routes.Save)
+    member x.EditView = x.WriteView (sprintf "Edit %s" x.Name)
+    member x.EditOkView = x.EditView ""
+    member x.NewView = x.WriteView (sprintf "New %s" x.Name) ""
 
-let contactWriteView = saveView (mapWebPostRoute SaveContact)
-let contactEditView = contactWriteView "Edit contact"
-let contactEditOkView = contactEditView ""
+let groupViews = 
+    { new CRUDViews<Group>(groupRoutes) with
+        override x.Dummy = Group.Dummy
+        override x.EditFormlet = groupFormlet
+        override x.ShowView = groupsView }
 
-let groupWriteView = saveView (mapWebPostRoute SaveGroup)
-let groupEditView = groupWriteView "Edit group"
-let groupEditOkView = groupEditView ""
-
+let contactViews = 
+    { new CRUDViews<Contact>(contactRoutes) with
+        override x.Dummy = Contact.Dummy
+        override x.EditFormlet = contactFormlet
+        override x.ShowView = contactsView }
