@@ -68,11 +68,11 @@ let save name formlet upsert allRoute editView editOkView cmgr =
 
 [<AbstractClass>]
 type AbstractCRUDActions<'a, 'b>(views: 'a CRUDViews, routes: CRUDRoutes) =
-    abstract member FindAll: (unit -> Sql.ConnectionManager -> Tx.TxResult<'a seq, _>)
-    abstract member GetById: (_ -> Sql.ConnectionManager -> Tx.TxResult<'a option, _>)
-    abstract member DeleteEntity: ('b -> Sql.ConnectionManager -> Tx.TxResult<unit option, _>)
-    abstract member Upsert: ('a -> Sql.ConnectionManager -> Tx.TxResult<'a option, _>)
-    abstract member DeleteFormlet: 'b Formlet
+    abstract FindAll: (unit -> Sql.ConnectionManager -> Tx.TxResult<'a seq, _>)
+    abstract GetById: (_ -> Sql.ConnectionManager -> Tx.TxResult<'a option, _>)
+    abstract DeleteEntity: ('b -> Sql.ConnectionManager -> Tx.TxResult<unit option, _>)
+    abstract Upsert: ('a -> Sql.ConnectionManager -> Tx.TxResult<'a option, _>)
+    abstract DeleteFormlet: 'b Formlet
     member x.Manage = 
         let action = manage x.FindAll views.ShowView
         getPathR routes.All, action

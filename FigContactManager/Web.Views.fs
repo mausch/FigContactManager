@@ -112,9 +112,9 @@ let saveView url title err (n: XNode list) =
 
 [<AbstractClass>]
 type 'a CRUDViews(routes: CRUDRoutes) =
-    abstract member Dummy: 'a
-    abstract member EditFormlet: ('a -> 'a Formlet)
-    abstract member ShowView: ('a seq -> string -> Node list)
+    abstract Dummy: 'a
+    abstract EditFormlet: ('a -> 'a Formlet)
+    abstract ShowView: ('a seq -> string -> Node list)
     member x.Name = typeof<'a>.Name
     member x.EmptyEditFormlet = x.EditFormlet x.Dummy
     member x.WriteView = saveView (mapWebPostRoute routes.Save)
