@@ -8,7 +8,7 @@ open Microsoft.FSharp.Reflection
 open FigContactManager.Data
 open FigContactManager.Model
 
-let connectionString = System.Configuration.ConfigurationManager.ConnectionStrings.["sqlite"].ConnectionString
+let connectionString = "Data Source=:memory:;Version=3;New=True"
 let createConnection() = createConnection connectionString
 
 [<Test>]
