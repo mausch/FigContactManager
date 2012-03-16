@@ -4,6 +4,7 @@ open System
 open System.Collections.Generic
 open System.Data
 open MbUnit.Framework
+open MbUnit.TestDSL
 open Microsoft.FSharp.Reflection
 open FigContactManager.Data
 open FigContactManager.Model
@@ -78,60 +79,61 @@ let ``generate findall`` () =
 
 let tx = Tx.TransactionBuilder()
 
-[<Test>]
-let ``create contact``() =
+let withConnection f () = 
     use conn = createConnection()
-    let mgr = Sql.withConnection conn
-    createSchema mgr [typeof<Contact>]
-    let insert =
-        tx {
-            let! i = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
-            let! j = Contact.Insert (Contact.New "George" "555-4447" "george@example.com")
-            printfn "%A" i
-            printfn "%A" j
-            return i,j
-        }
-    insert mgr 
-    |> Tx.get
-    |> (fun (c1,c2) -> 
-            Assert.AreEqual(1L, c1.Id)
-            Assert.AreEqual(2L, c2.Id))
+    f (Sql.withConnection conn)
 
-[<Test>]
-let ``create group`` () =
-    use conn = createConnection()
-    let mgr = Sql.withConnection conn
-    createSchema mgr [typeof<Group>]
-    let newGroup = Group.Insert { Id = 0L; Name = "Business" } |> Tx.map ignore
-    newGroup mgr |> Tx.get |> ignore
+[<StaticTestFactory>]
+let tests() = 
+    [
+        "Connection tests" =>>
+            withConnection +> [
+                "create contact" ==>
+                    fun mgr ->
+                        createSchema mgr [typeof<Contact>]
+                        let insert =
+                            tx {
+                                let! i = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
+                                let! j = Contact.Insert (Contact.New "George" "555-4447" "george@example.com")
+                                printfn "%A" i
+                                printfn "%A" j
+                                return i,j
+                            }
+                        let c1,c2 = insert mgr |> Tx.get
+                        Assert.AreEqual(1L, c1.Id)
+                        Assert.AreEqual(2L, c2.Id)
 
-[<Test>]
-let ``delete group cascade`` () =
-    use conn = createConnection()
-    let mgr = Sql.withConnection conn
-    createSchema mgr [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
-    let transaction = 
-        tx {
-            let! john = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
-            let! business = Group.Insert { Id = 0L; Name = "Business" }
-            let! john_business = ContactGroup.Insert { Id = 0L; Group = business.Id; Contact = john.Id }
-            let! _ = Group.DeleteCascade business.Id
-            let! count = Tx.execScalar "select count(*) from ContactGroup" []
-            Assert.AreEqual(0L, Option.get count)
-        }
-    transaction mgr |> Tx.get |> ignore
+                "create group" ==>
+                    fun mgr ->
+                        createSchema mgr [typeof<Group>]
+                        let newGroup = Group.Insert { Id = 0L; Name = "Business" } |> Tx.map ignore
+                        newGroup mgr |> Tx.get |> ignore
 
-[<Test>]
-let ``find all groups`` () =
-    use conn = createConnection()
-    let mgr = Sql.withConnection conn
-    createSchema mgr [typeof<Group>]
-    let transaction =
-        tx {
-            let! business = Group.Insert { Id = 0L; Name = "Business" }
-            let! groups = Group.FindAll() |> Tx.map Seq.toList
-            Assert.AreEqual(1, groups.Length)
-            Assert.AreEqual(business, groups.[0])
-            return ()
-        }
-    transaction mgr |> Tx.get |> ignore
+                "delete group cascade" ==>
+                    fun mgr ->
+                        createSchema mgr [typeof<Contact>; typeof<Group>; typeof<ContactGroup>]
+                        let transaction = 
+                            tx {
+                                let! john = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
+                                let! business = Group.Insert { Id = 0L; Name = "Business" }
+                                let! john_business = ContactGroup.Insert { Id = 0L; Group = business.Id; Contact = john.Id }
+                                let! _ = Group.DeleteCascade business.Id
+                                let! count = Tx.execScalar "select count(*) from ContactGroup" []
+                                Assert.AreEqual(0L, Option.get count)
+                            }
+                        transaction mgr |> Tx.get |> ignore
+
+                "find all groups" ==>
+                    fun mgr ->
+                        createSchema mgr [typeof<Group>]
+                        let transaction =
+                            tx {
+                                let! business = Group.Insert { Id = 0L; Name = "Business" }
+                                let! groups = Group.FindAll() |> Tx.map Seq.toList
+                                Assert.AreEqual(1, groups.Length)
+                                Assert.AreEqual(business, groups.[0])
+                                return ()
+                            }
+                        transaction mgr |> Tx.get |> ignore
+            ]
+    ]

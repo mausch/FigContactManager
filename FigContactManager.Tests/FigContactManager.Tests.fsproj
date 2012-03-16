@@ -37,6 +37,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <Compile Include="Assembly.fs" />
+    <Compile Include="TestDSL.fs" />
     <Compile Include="Data.fs" />
     <Compile Include="ModelValidation.fs" />
     <Compile Include="Web.fs" />
