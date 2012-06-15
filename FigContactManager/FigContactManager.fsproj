@@ -49,9 +49,12 @@
     <Compile Include="Global.asax.fs" />
     <Compile Include="Program.fs" />
     <None Include="Web.config" />
-    <None Include="packages.config" />
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Compiler.CodeDom">
+      <HintPath>..\packages\FSPowerPack.Community.2.1.2.1\Tools\FSharp.Compiler.CodeDom.dll</HintPath>
+    </Reference>
     <Reference Include="FSharpx.Core">
       <HintPath>..\Figment\lib\FSharpx.Core.dll</HintPath>
     </Reference>
@@ -63,8 +66,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite">
-      <HintPath>..\packages\System.Data.SQLite.1.0.66.1\lib\System.Data.SQLite.DLL</HintPath>
-      <Private>True</Private>
+      <HintPath>..\lib\x86\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
@@ -95,10 +97,10 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="WingBeats">
-      <HintPath>C:\prg\FigContactManager\FsFormlets\lib\WingBeats.dll</HintPath>
+      <HintPath>..\FsFormlets\lib\WingBeats.dll</HintPath>
     </Reference>
     <Reference Include="WingBeats.Xhtml">
-      <HintPath>C:\prg\FigContactManager\FsFormlets\lib\WingBeats.Xhtml.dll</HintPath>
+      <HintPath>..\FsFormlets\lib\WingBeats.Xhtml.dll</HintPath>
     </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

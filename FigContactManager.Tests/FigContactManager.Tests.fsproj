@@ -85,8 +85,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite">
-      <HintPath>..\packages\System.Data.SQLite.1.0.66.1\lib\System.Data.SQLite.DLL</HintPath>
-      <Private>True</Private>
+      <HintPath>..\lib\x86\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="System.Numerics" />
     <ProjectReference Include="..\FigContactManager\FigContactManager.fsproj">
