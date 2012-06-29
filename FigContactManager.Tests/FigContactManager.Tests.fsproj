@@ -11,6 +11,8 @@
     <AssemblyName>FigContactManager.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>FigContactManager.Tests</Name>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -59,7 +61,8 @@
       <Private>True</Private>
     </ProjectReference>
     <Reference Include="FSharpx.Core">
-      <HintPath>..\Figment\lib\FSharpx.Core.dll</HintPath>
+      <HintPath>..\packages\FSharpx.Core.1.6.4\lib\40\Fsharpx.Core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Gallio">
       <HintPath>..\packages\Gallio.3.3.1\lib\NET40\Gallio.dll</HintPath>
@@ -104,6 +107,7 @@
       <HintPath>..\FsFormlets\lib\WingBeats.Xhtml.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <Import Project="../.nuget/BuildMagic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">
