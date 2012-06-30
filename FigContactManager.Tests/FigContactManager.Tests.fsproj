@@ -6,7 +6,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{717a5346-84ef-4a8a-bc70-c3011f9458a1}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>FigContactManager.Tests</RootNamespace>
     <AssemblyName>FigContactManager.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -38,11 +38,10 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
     <None Include="packages.config" />
-    <Compile Include="Assembly.fs" />
-    <Compile Include="TestDSL.fs" />
     <Compile Include="Data.fs" />
     <Compile Include="ModelValidation.fs" />
     <Compile Include="Web.fs" />
+    <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Figment\Figment\Figment.fsproj">
@@ -62,6 +61,10 @@
     </ProjectReference>
     <Reference Include="FSharpx.Core">
       <HintPath>..\packages\FSharpx.Core.1.6.4\lib\40\Fsharpx.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Fuchu">
+      <HintPath>..\packages\Fuchu.0.1.2\lib\net40-client\Fuchu.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Gallio">
