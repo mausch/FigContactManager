@@ -17,15 +17,22 @@ type App() =
 
     static member AddSampleData conn =
         let tx = Tx.TransactionBuilder()
+        let choiceToTx =
+            function
+            | Choice1Of2 a -> fun _ -> Tx.Commit a
+            | Choice2Of2 e -> fun _ -> Tx.Rollback e
+
+        let applyToChoice f x = choiceToTx x |> Tx.bind f
+
         let t =
             tx {
-                let! john = Contact.TryNew "John" "555-1234" "john@example.com" |> Choice.get |> Contact.Insert
-                let! jennifer = Contact.TryNew "Jennifer" "554-9988" "jennifer@example.com" |> Choice.get |> Contact.Insert
-                let! friends = Group.TryNew "Friends" |> Choice.get |> Group.Insert
-                let! work = Group.TryNew "Work" |> Choice.get |> Group.Insert
-                do! ContactGroup.TryNew friends.Id john.Id |> Choice.get |> ContactGroup.Insert |> Tx.map ignore
-                do! ContactGroup.TryNew work.Id john.Id |> Choice.get |> ContactGroup.Insert |> Tx.map ignore
-                do! ContactGroup.TryNew friends.Id jennifer.Id |> Choice.get |> ContactGroup.Insert |> Tx.map ignore
+                let! john = Contact.TryNew "John" "555-1234" "john@example.com" |> applyToChoice Contact.Insert
+                let! jennifer = Contact.TryNew "Jennifer" "554-9988" "jennifer@example.com" |> applyToChoice Contact.Insert
+                let! friends = Group.TryNew "Friends" |> applyToChoice Group.Insert
+                let! work = Group.TryNew "Work" |> applyToChoice Group.Insert
+                do! ContactGroup.TryNew friends.Id john.Id |> applyToChoice ContactGroup.Insert |> Tx.map ignore
+                do! ContactGroup.TryNew work.Id john.Id |> applyToChoice ContactGroup.Insert |> Tx.map ignore
+                do! ContactGroup.TryNew friends.Id jennifer.Id |> applyToChoice ContactGroup.Insert |> Tx.map ignore
                 return ()
             }
         let t = Tx.required t // run in a transaction
