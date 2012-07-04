@@ -1,10 +1,9 @@
-﻿module FigContactManager.Data.Tests
+﻿module FigContactManager.Tests.Data
 
 open Fuchu
 open System
 open System.Collections.Generic
 open System.Data
-open MbUnit.Framework
 open Microsoft.FSharp.Reflection
 open FigContactManager.Data
 open FigContactManager.Model
@@ -25,7 +24,7 @@ let tests =
             testCase "insert" <| fun _ ->
                 let sql,p = generateInsert (Contact.New "John" "555-1234" "john@example.com")
                 let p = Seq.toList p
-                printfn "%s" sql
+                //printfn "%s" sql
                 Assert.AreEqual("insert into Contact (Id,Version,Name,Phone,Email) values (null, @Version,@Name,@Phone,@Email); select last_insert_rowid();", sql)
                 Assert.AreEqual(4, p.Length)
                 Assert.AreEqual("@Version", p.[0].ParameterName)
@@ -40,7 +39,7 @@ let tests =
             testCase "delete" <| fun _ ->
                 let sql,p = generateDelete (Contact.NewWithId 2L "" "" "")
                 let p = Seq.toList p
-                printfn "%s" sql
+                //printfn "%s" sql
                 Assert.AreEqual("delete from Contact where id = @i; select changes();", sql)
                 Assert.AreEqual(1, p.Length)
                 Assert.AreEqual("@i", p.[0].ParameterName)
@@ -49,7 +48,7 @@ let tests =
             testCase "update" <| fun _ ->
                 let sql,p = generateUpdate (Contact.NewWithId 2L "nn" "pp" "ee")
                 let p = p |> Seq.map (fun p -> p.ParameterName, p.Value) |> dict
-                printfn "%s" sql
+                //printfn "%s" sql
                 Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id; select changes();", sql)
                 Assert.AreEqual(5, p.Count)
                 Assert.AreEqual(2L, unbox p.["@id"])
@@ -59,9 +58,9 @@ let tests =
 
             testCase "versioned update" <| fun _ ->
                 let sql,p = generateVersionedUpdate (Contact.New "name" "phone" "mail")
-                printfn "%s" sql
+                //printfn "%s" sql
                 Assert.AreEqual("update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id and version = @oldversion; select changes();", sql)
-                printfn "%A" p
+                //printfn "%A" p
                 let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
                 Assert.AreEqual("name", unbox p.["@Name"])
                 Assert.AreEqual("phone", unbox p.["@Phone"])
@@ -78,7 +77,7 @@ let tests =
 
             testCase "findall" <| fun _ ->
                 let sql = generateFindAll typeof<Group> (Some (20,50))
-                printfn "%s" sql
+                //printfn "%s" sql
                 Assert.AreEqual("select * from \"Group\" limit 20 offset 50", sql)
         ]
 
@@ -90,8 +89,8 @@ let tests =
                         tx {
                             let! i = Contact.Insert (Contact.New "John" "555-1234" "john@example.com")
                             let! j = Contact.Insert (Contact.New "George" "555-4447" "george@example.com")
-                            printfn "%A" i
-                            printfn "%A" j
+                            //printfn "%A" i
+                            //printfn "%A" j
                             return i,j
                         }
                     let c1,c2 = insert mgr |> Tx.get
