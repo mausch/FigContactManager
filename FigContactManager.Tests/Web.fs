@@ -44,7 +44,7 @@ let tests =
                         override x.Redirect(url, _) = redirectTo := url 
                         override x.SetCookie c = cookie := c }
                 |> buildCtx
-            (snd contactActions'.Delete) mgr ctx
+            contactActions'.Delete.DbAction mgr ctx
             Assert.Equal("redirect to URL", "/contacts", !redirectTo)
             let actual = base64decode (!cookie).Value
             Assert.StringContains("", "deleted or modified", actual)

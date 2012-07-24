@@ -12,8 +12,19 @@ open FigContactManager.Web.Views
 open FigContactManager.Web.Routes
 open Formlets
 
-type RouteAndDbAction = RouteConstraint * (Sql.ConnectionManager -> FAction)
-type RouteAndAction = RouteConstraint * FAction
+type RouteAndAction = {
+    Route: RouteConstraint
+    Action: FAction
+}
+
+type RouteAndDbAction = {
+    Route: RouteConstraint
+    DbAction: Sql.ConnectionManager -> FAction
+} with 
+    static member ToRouteAndAction cmgr (r: RouteAndDbAction) =
+        { Route = r.Route
+          Action = r.DbAction cmgr }
+
 
 get "/" (redirectR AllContacts)
 let errorUrl = Error "" |> mapWebGetRoute |> baseUrl
@@ -74,20 +85,21 @@ type AbstractCRUDActions<'a, 'b>(views: 'a CRUDViews, routes: CRUDRoutes) =
     abstract Upsert: ('a -> Sql.ConnectionManager -> Tx.TxResult<'a option, _>)
     abstract DeleteFormlet: 'b Formlet
     member x.Manage = 
-        let action = manage x.FindAll views.ShowView
-        getPathR routes.All, action
+        { Route = getPathR routes.All
+          DbAction = manage x.FindAll views.ShowView }
     member x.Delete = 
-        let action = delete views.Name routes.All x.DeleteEntity x.DeleteFormlet
-        postPathR routes.Delete, action
+        { Route = postPathR routes.Delete
+          DbAction = delete views.Name routes.All x.DeleteEntity x.DeleteFormlet }
     member x.Edit = 
         let action = edit views.Name x.GetById views.EditFormlet views.EditOkView
-        getPathR (routes.Edit 0L), fun c -> noCache >>. action c
-    member x.Save = 
-        let action = save views.Name views.EmptyEditFormlet x.Upsert routes.All views.EditView views.EditOkView
-        postPathR routes.Save, action
+        { Route = getPathR (routes.Edit 0L)
+          DbAction = fun c -> noCache >>. action c }
+    member x.Save =
+        { Route = postPathR routes.Save
+          DbAction = save views.Name views.EmptyEditFormlet x.Upsert routes.All views.EditView views.EditOkView }
     member x.New = 
-        let action = views.EmptyEditFormlet |> renderToXml |> views.NewView |> wbview
-        getPathR routes.New, action
+        { Route = getPathR routes.New
+          Action = views.EmptyEditFormlet |> renderToXml |> views.NewView |> wbview }
 
 let contactActions' = 
     { new AbstractCRUDActions<_,_>(contactViews, contactRoutes) with
@@ -114,10 +126,10 @@ type CRUDActions = {
 }
 
 let abstractToConcreteCRUDActions (a: AbstractCRUDActions<_,_>) cmgr =
-    { Manage = fst a.Manage, snd a.Manage <| cmgr
-      Delete = fst a.Delete, snd a.Delete <| cmgr
-      Edit = fst a.Edit, snd a.Edit <| cmgr
-      Save = fst a.Save, snd a.Save <| cmgr
+    { Manage = RouteAndDbAction.ToRouteAndAction cmgr a.Manage
+      Delete = RouteAndDbAction.ToRouteAndAction cmgr a.Delete
+      Edit = RouteAndDbAction.ToRouteAndAction cmgr a.Edit
+      Save = RouteAndDbAction.ToRouteAndAction cmgr a.Save
       New = a.New }
 
 let crudActionsToList (a: CRUDActions) = 

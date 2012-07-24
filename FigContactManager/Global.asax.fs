@@ -50,9 +50,9 @@ type App() =
         App.InitializeDatabase connMgr
 
         let actions = [groupActions; contactActions] |> List.collect ((|>) connMgr)
-        let actions = [for r,a in actions -> r, Filters.flash a]
-        for r,a in actions do action r a
-        ()
+        let actions = [for a in actions -> 
+                        { a with Action = Filters.flash a.Action } ]
+        for a in actions do action a.Route a.Action
 
     member this.Application_End() =
         let reason = System.Web.Hosting.HostingEnvironment.ShutdownReason.ToString()
