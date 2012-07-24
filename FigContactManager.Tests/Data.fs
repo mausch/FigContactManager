@@ -28,11 +28,11 @@ let tests =
                 Assert.Equal("insert SQL", "insert into Contact (Id,Version,Name,Phone,Email,User) values (null, @Version,@Name,@Phone,@Email,@User); select last_insert_rowid();", sql)
                 Assert.Equal("parameter count", 5, p.Length)
 
-                Assert.Equal("1. parameter name", "@Version", p.[0].ParameterName)
-                Assert.Equal("2. parameter name", "@Name", p.[1].ParameterName)
-                Assert.Equal("3. parameter name", "@Phone", p.[2].ParameterName)
-                Assert.Equal("4. parameter name", "@Email", p.[3].ParameterName)
-                Assert.Equal("5. parameter name", "@User", p.[4].ParameterName)
+                let assertParamNames =
+                    Seq.iteri <| fun i name -> 
+                                    Assert.Equal((i+1).ToString() + ". parameter name", name, p.[i].ParameterName)
+
+                assertParamNames ["@Version"; "@Name"; "@Phone"; "@Email"; "@User"]
 
                 Assert.Equal("1. parameter value", 0L, unbox p.[0].Value)
                 Assert.Equal("2. parameter value", "John", string p.[1].Value)
