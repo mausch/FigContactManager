@@ -80,23 +80,23 @@ let contactsView (contacts: Contact seq) error =
 let contactFormlet (c: Contact) =
     let idVersion = idVersionFormlet (c.Id, c.Version)
     let nameInput = f.Text(c.Name, required = true) |> f.WithLabel "Name"
-    let phoneOrEmail = 
+    let phoneAndEmail = 
         let phoneInput = f.Tel(c.Phone) |> f.WithLabel "Phone:"
         let emailInput = f.Email(c.Email) |> f.WithLabel "Email:"
-        let phoneOrEmail = yields tuple2 <*> phoneInput <*> emailInput
+        let phoneAndEmail = yields tuple2 <*> phoneInput <*> emailInput
         let nonEmpty = String.IsNullOrWhiteSpace >> not
         let oneNonEmpty (a,b) = nonEmpty a || nonEmpty b
-        phoneOrEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
+        phoneAndEmail |> satisfies (err oneNonEmpty (fun _ -> "Enter either a phone or an email"))
 
-    yields (fun (i,v) n (p,e) -> { Contact.Id = i; Version = v; Name = n; Phone = p; Email = e })
+    yields (fun (i,v) n (p,e) -> { Contact.Id = i; Version = v; Name = n; Phone = p; Email = e; User = c.User })
     <*> idVersion
     <*> nameInput
-    <*> phoneOrEmail
+    <*> phoneAndEmail
 
 let groupFormlet (c: Group) =
     let nameInput = f.Text(c.Name, required = true) |> f.WithLabel "Name"
 
-    yields (fun i n -> { Group.Id = i; Name = n })
+    yields (fun i n -> { Group.Id = i; Name = n; User = c.User })
     <*> pickler c.Id
     <*> nameInput
 

@@ -8,28 +8,35 @@ open Microsoft.FSharp.Reflection
 open FigContactManager.Data
 open Tx.Operators
 
+type User = {
+    Id: int64
+    Name: string
+}
+
 type Contact = {
     Id: int64
     Version: int64
     Name: string
     Phone: string
     Email: string
+    User: int64
 }
 with 
     static member IncrVersion (a: Contact) = { a with Version = a.Version + 1L }
-    static member NewWithId id name phone email = 
-        { Id = id; Name = name; Phone = phone; Email = email; Version = 0L }
+    static member NewWithId id name phone email user = 
+        { Id = id; Name = name; Phone = phone; Email = email; User = user; Version = 0L }
     static member New = Contact.NewWithId 0L
-    static member Dummy = Contact.New "" "" ""
+    static member Dummy = Contact.New "" "" "" 0L
 
 type Group = {
     Id: int64
     Name: string
+    User: int64
 }
 with 
-    static member New name =
-        { Id = 0L; Name = name }
-    static member Dummy = Group.New ""
+    static member New name user =
+        { Id = 0L; Name = name; User = user }
+    static member Dummy = Group.New "" 0L
 
 type ContactGroup = {
     Id: int64
@@ -39,7 +46,6 @@ type ContactGroup = {
 with 
     static member New group contact =
         { Id = 0L; Group = group; Contact = contact }
-
 
 type ContactGroup with
     static member Insert (c: ContactGroup) =

@@ -26,10 +26,11 @@ type App() =
 
         let t =
             tx {
-                let! john = Contact.TryNew "John" "555-1234" "john@example.com" |> applyToChoice Contact.Insert
-                let! jennifer = Contact.TryNew "Jennifer" "554-9988" "jennifer@example.com" |> applyToChoice Contact.Insert
-                let! friends = Group.TryNew "Friends" |> applyToChoice Group.Insert
-                let! work = Group.TryNew "Work" |> applyToChoice Group.Insert
+                let ccccc = Contact.Insert
+                let! john = Contact.TryNew "John" "555-1234" "john@example.com" 0L |> applyToChoice Contact.Insert
+                let! jennifer = Contact.TryNew "Jennifer" "554-9988" "jennifer@example.com" 0L |> applyToChoice Contact.Insert
+                let! friends = Group.TryNew "Friends" 0L |> applyToChoice Group.Insert
+                let! work = Group.TryNew "Work" 0L |> applyToChoice Group.Insert
                 do! ContactGroup.TryNew friends.Id john.Id |> applyToChoice ContactGroup.Insert |> Tx.map ignore
                 do! ContactGroup.TryNew work.Id john.Id |> applyToChoice ContactGroup.Insert |> Tx.map ignore
                 do! ContactGroup.TryNew friends.Id jennifer.Id |> applyToChoice ContactGroup.Insert |> Tx.map ignore

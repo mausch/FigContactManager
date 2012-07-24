@@ -57,14 +57,14 @@ let edit name getById editFormlet view cmgr =
 let save name formlet upsert allRoute editView editOkView cmgr = 
     runPost formlet
     >>= function
-        | populatedForm, _, Some entity -> 
+        | { Form = populatedForm; Value = Some entity } -> 
             match upsert entity cmgr with
             | Tx.Commit (Some _) -> redirectR allRoute
             | Tx.Commit None -> 
                 let msg = sprintf "%s deleted or modified, please go back and reload" name
                 wbview (editView msg populatedForm)
             | _ -> error "DB Error"
-        | errorForm, _, None -> wbview (editOkView errorForm)
+        | { Form = errorForm; Value = None } -> wbview (editOkView errorForm)
 
 [<AbstractClass>]
 type AbstractCRUDActions<'a, 'b>(views: 'a CRUDViews, routes: CRUDRoutes) =

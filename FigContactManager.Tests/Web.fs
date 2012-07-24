@@ -3,6 +3,7 @@
 open Fuchu
 open FSharpx
 open Formlets
+open Formlets.Helpers
 open FigContactManager
 open FigContactManager.Data
 open FigContactManager.Model
@@ -23,10 +24,9 @@ let tests =
             let env = EnvDict.fromStrings [losSerializer.Serialize (1L,1L); "John"; ""; ""]
             //printfn "%A" env
             match run contactViews.EmptyEditFormlet env with
-            | Success c -> failwithf "formlet should not have succeeded: %A" c
-            | Failure (_,errors) -> 
-                Assert.AreEqual(1, errors.Length)
-                Assert.AreEqual("Enter either a phone or an email", errors.[0])
+            | Success c -> failtestf "formlet should not have succeeded: %A" c
+            | Failure (_,["Enter either a phone or an email"]) -> ()
+            | x -> failtestf "Expected failure with 'Enter either a phone or an email'\nActual: %A" x
 
         testCase "delete contact with inexisting contact" <| fun _ ->
             use conn = FigContactManager.Tests.Data.createConnection()
@@ -45,6 +45,7 @@ let tests =
                         override x.SetCookie c = cookie := c }
                 |> buildCtx
             (snd contactActions'.Delete) mgr ctx
-            Assert.AreEqual("/contacts", !redirectTo)
-            Assert.Contains(base64decode (!cookie).Value, "deleted or modified")
+            Assert.Equal("redirect to URL", "/contacts", !redirectTo)
+            let actual = base64decode (!cookie).Value
+            Assert.StringContains("", "deleted or modified", actual)
     ]

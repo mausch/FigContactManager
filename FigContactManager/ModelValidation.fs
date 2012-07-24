@@ -39,15 +39,17 @@ type Contact with
         <!> nonEmpty "Name can't be empty" c.Name 
         <*> phone c.Phone 
         <*> email c.Email
-    static member TryNew name phone email =
-        Contact.New name phone email |> Contact.Validate
+        <*> Choice1Of2 c.Id
+    static member TryNew name phone email id =
+        Contact.New name phone email id |> Contact.Validate
 
 type Group with
     static member Validate (g: Group) =
         Group.New
         <!> nonEmpty "Name can't be empty" g.Name
-    static member TryNew name =
-        Group.New name |> Group.Validate
+        <*> Choice1Of2 g.Id
+    static member TryNew name id =
+        Group.New name id |> Group.Validate
 
 type ContactGroup with
     static member Validate (g: ContactGroup) =
