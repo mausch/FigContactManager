@@ -22,24 +22,26 @@ let tests =
     testList "Data" [
         testList "SQL generation" [
             testCase "insert" <| fun _ ->
-                let sql,p = generateInsert (Contact.New "John" "555-1234" "john@example.com")
+                let sql,p = generateInsert (Contact.New "John" "555-1234" "john@example.com" 0L)
                 let p = Seq.toList p
                 //printfn "%s" sql
-                Assert.Equal("insert SQL", "insert into Contact (Id,Version,Name,Phone,Email) values (null, @Version,@Name,@Phone,@Email); select last_insert_rowid();", sql)
-                Assert.Equal("parameter count", 4, p.Length)
+                Assert.Equal("insert SQL", "insert into Contact (Id,Version,Name,Phone,Email,User) values (null, @Version,@Name,@Phone,@Email,@User); select last_insert_rowid();", sql)
+                Assert.Equal("parameter count", 5, p.Length)
 
                 Assert.Equal("1. parameter name", "@Version", p.[0].ParameterName)
                 Assert.Equal("2. parameter name", "@Name", p.[1].ParameterName)
                 Assert.Equal("3. parameter name", "@Phone", p.[2].ParameterName)
                 Assert.Equal("4. parameter name", "@Email", p.[3].ParameterName)
+                Assert.Equal("5. parameter name", "@User", p.[4].ParameterName)
 
                 Assert.Equal("1. parameter value", 0L, unbox p.[0].Value)
                 Assert.Equal("2. parameter value", "John", string p.[1].Value)
                 Assert.Equal("3. parameter value", "555-1234", string p.[2].Value)
                 Assert.Equal("4. parameter value", "john@example.com", string p.[3].Value)
+                Assert.Equal("5. parameter value", 0L, unbox p.[4].Value)
 
             testCase "delete" <| fun _ ->
-                let sql,p = generateDelete (Contact.NewWithId 2L "" "" "")
+                let sql,p = generateDelete (Contact.NewWithId 2L "" "" "" 0L)
                 let p = Seq.toList p
                 //printfn "%s" sql
                 Assert.Equal("delete SQL", "delete from Contact where id = @i; select changes();", sql)
@@ -48,20 +50,21 @@ let tests =
                 Assert.Equal("parameter value", 2L, unbox p.[0].Value)
 
             testCase "update" <| fun _ ->
-                let sql,p = generateUpdate (Contact.NewWithId 2L "nn" "pp" "ee")
+                let sql,p = generateUpdate (Contact.NewWithId 2L "nn" "pp" "ee" 0L)
                 let p = p |> Seq.map (fun p -> p.ParameterName, p.Value) |> dict
                 //printfn "%s" sql
-                Assert.Equal("update SQL", "update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id; select changes();", sql)
-                Assert.Equal("parameter count", 5, p.Count)
+                Assert.Equal("update SQL", "update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email,User=@User where id = @id; select changes();", sql)
+                Assert.Equal("parameter count", 6, p.Count)
                 Assert.Equal("id parameter value", 2L, unbox p.["@id"])
                 Assert.Equal("name parameter value", "nn", unbox p.["@Name"])
                 Assert.Equal("phone parameter value", "pp", unbox p.["@Phone"])
                 Assert.Equal("email parameter value", "ee", unbox p.["@Email"])
+                Assert.Equal("user parameter value", 0L, unbox p.["@User"])
 
             testCase "versioned update" <| fun _ ->
-                let sql,p = generateVersionedUpdate (Contact.New "name" "phone" "mail")
+                let sql,p = generateVersionedUpdate (Contact.New "name" "phone" "mail" 0L)
                 //printfn "%s" sql
-                Assert.Equal("update SQL", "update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email where id = @id and version = @oldversion; select changes();", sql)
+                Assert.Equal("update SQL", "update Contact set Version=@Version,Name=@Name,Phone=@Phone,Email=@Email,User=@User where id = @id and version = @oldversion; select changes();", sql)
                 //printfn "%A" p
                 let p = p |> List.map (fun x -> x.ParameterName,x.Value) |> dict
                 Assert.Equal("name parameter value", "name", unbox p.["@Name"])
